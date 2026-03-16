@@ -11,11 +11,11 @@ Les catégories (table `tag`) sont des étiquettes associées aux modules pour f
 
 ## Tableau
 
-| Colonne                   | Description                                             |
-| ------------------------- | ------------------------------------------------------- |
-| **Désignation**           | Nom de la catégorie (ex: Conformité, Digital, Sécurité) |
-| **Dernière modification** | Date/heure de la dernière mise à jour                   |
-| **Créé le**               | Date/heure de création                                  |
+| Colonne | Description |
+|---------|-------------|
+| **Désignation** | Nom de la catégorie (ex: Conformité, Digital, Sécurité) |
+| **Dernière modification** | Date/heure de la dernière mise à jour |
+| **Créé le** | Date/heure de création |
 
 Recherche en temps réel sur la colonne **Désignation**. Pagination : 10 lignes par page.
 
@@ -41,22 +41,43 @@ Sélectionner **exactement 1 ligne** fait apparaître le bouton **"Modifier"** �
 
 **Depuis le menu `⋮`** (suppression unitaire) ou **sélection multiple** → bouton "Supprimer [N]" → `CategoriesDeleteModal`.
 
-`PATCH /api/tag/soft-delete`
+Le flux de suppression se déroule en deux temps selon que la catégorie est utilisée ou non :
 
-La suppression est appliquée **localement** dans le tableau sans rechargement réseau (filtrage de l'array `categories.value`).
+### Catégorie non utilisée
 
-<Warning>
-  Supprimer une catégorie ne la retire pas automatiquement
-  des modules auxquels elle est associée. Vérifiez les
-  associations avant suppression.
-</Warning>
+`PATCH /api/tag/soft-delete` → vérifie la table `module_tag` → aucune association → **hard-delete direct**.
+
+### Catégorie utilisée dans des modules
+
+`PATCH /api/tag/soft-delete` → retourne `{ requiresConfirmation: true, modules: [...] }` → une **modale de confirmation** s'ouvre listant tous les modules concernés :
+
+```
+⚠️  « Conformité » est associée à 3 modules
+
+    Modules affectés :
+    📖 Conformité et Réglementation Bancaire
+    📖 LCB-FT : Lutte contre le blanchiment
+    📖 Introduction à la conformité
+
+    ℹ️  Cette action est irréversible. Les modules listés
+        ne seront pas supprimés — uniquement l'association
+        avec cette catégorie sera retirée.
+
+    [Annuler]   [Supprimer quand même]
+```
+
+Cliquer sur **"Supprimer quand même"** appelle `POST /api/tag/force-delete` qui :
+1. Supprime toutes les entrées dans `module_tag` pour ce tag
+2. Hard-delete du tag dans la table `tag`
+3. Log dans `activity_log` avec `type: "force_delete"`
+
+Cliquer sur **Annuler** ferme la modale sans aucune modification.
 
 ---
 
 ## Utilisation
 
 Les catégories sont utilisées :
-
 - Dans l'éditeur de module (étape 1 → "Catégories" → `ModulesCategoriesModal`)
 - Côté mobile pour le filtrage des modules dans le panneau de filtrage (section "Catégories")
 - Sur les cartes modules (badge de tags)

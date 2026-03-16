@@ -19,27 +19,25 @@ L'upload accepte tout type de fichier via `multipart/form-data` avec les champs 
 
 **Nettoyage du nom de fichier côté serveur :**
 
-| Transformation                | Exemple                                           |
-| ----------------------------- | ------------------------------------------------- |
-| Suppression des accents       | `"Méthode.pdf"` → `"methode.pdf"`                 |
-| Espaces → underscores         | `"État avancement.pdf"` → `"etat_avancement.pdf"` |
-| Caractères spéciaux supprimés | `"rapport (2024).pdf"` → `"rapport_2024.pdf"`     |
-| Timestamp unique ajouté       | `"methode_1710000000000.pdf"`                     |
-| Tout en minuscules            |                                                   |
+| Transformation | Exemple |
+|---------------|---------|
+| Suppression des accents | `"Méthode.pdf"` → `"methode.pdf"` |
+| Espaces → underscores | `"État avancement.pdf"` → `"etat_avancement.pdf"` |
+| Caractères spéciaux supprimés | `"rapport (2024).pdf"` → `"rapport_2024.pdf"` |
+| Timestamp unique ajouté | `"methode_1710000000000.pdf"` |
+| Tout en minuscules | |
 
 Le chemin dans Supabase Storage suit le format : `modules/{id_module}/{nom_nettoyé_timestamp}.ext`
 
 **Deux valeurs sont stockées en BDD :**
 
-| Colonne        | Contenu                                  |
-| -------------- | ---------------------------------------- |
-| `fichier`      | Chemin relatif dans Storage (nettoyé)    |
+| Colonne | Contenu |
+|---------|---------|
+| `fichier` | Chemin relatif dans Storage (nettoyé) |
 | `nom_original` | Nom original du fichier pour l'affichage |
 
 <Note>
-  En cas d'échec de l'insertion en BDD après upload Storage
-  réussi, le fichier est automatiquement supprimé du Storage
-  (rollback).
+En cas d'échec de l'insertion en BDD après upload Storage réussi, le fichier est automatiquement supprimé du Storage (rollback).
 </Note>
 
 ---
@@ -60,11 +58,9 @@ https://{supabase-project}.supabase.co/storage/v1/object/public/documents/{chemi
 
 Si le fichier est déjà une URL complète (anciens documents), elle est utilisée telle quelle.
 
-<Warning>
-  Un même document peut être associé à plusieurs cours du
-  même module. La suppression d'un document du module ne
-  désassocie pas automatiquement les cours qui l'utilisent.
-</Warning>
+<Note>
+Un même document peut être associé à plusieurs cours du même module. La suppression d'un document (depuis la page Documents ou depuis la modale d'un module) **retire automatiquement ses références** dans tous les cours du module concerné (`cours.documents[]`) avant de supprimer l'entrée BDD et le fichier Storage.
+</Note>
 
 ---
 
