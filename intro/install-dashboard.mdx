@@ -1,0 +1,133 @@
+---
+title: Installation — Dashboard Admin
+description: Lancer le dashboard admin UTB Learn en local
+---
+
+# Installation — Dashboard Admin
+
+Le dashboard admin est une application **Nuxt 4** gérée avec **pnpm**. Voici comment la lancer en développement local.
+
+---
+
+## Prérequis
+
+Avant de commencer, assure-toi d'avoir :
+- Node.js `>= 20.x`
+- pnpm `10.21.0`
+- Docker Desktop (si tu veux utiliser Supabase en local)
+- Supabase CLI `>= 2.64.x`
+
+---
+
+## 1. Cloner le repo & installer les dépendances
+
+```bash
+# Cloner le projet
+git clone <url-du-repo>
+cd dashboard
+
+# Installer les dépendances
+pnpm install
+```
+
+---
+
+## 2. Configurer les variables d'environnement
+
+Copie le fichier exemple et renseigne tes clés Supabase :
+
+```bash
+cp .env.example .env.local
+```
+
+Puis édite `.env.local` avec les valeurs correspondant à ton environnement (voir [Variables d'environnement](/intro/env-vars)).
+
+---
+
+## 3. Lancer Supabase en local (optionnel)
+
+Si tu travailles sur des fonctionnalités nécessitant la base de données en local :
+
+```bash
+# Démarrer l'instance Supabase locale (Docker requis)
+supabase start
+```
+
+La CLI affiche les clés locales à copier dans `.env.local`.
+
+```bash
+# Appliquer les migrations existantes
+supabase db push
+```
+
+<Note>
+Pour synchroniser ta base locale avec la prod, utilise :
+```bash
+supabase db dump -f dump.sql
+supabase db reset --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres < dump.sql
+```
+</Note>
+
+---
+
+## 4. Lancer le serveur de développement
+
+```bash
+# Avec Supabase en production (.env)
+pnpm dev
+
+# Avec Supabase local (.env.local)
+pnpm dev:local
+```
+
+Le dashboard est accessible sur [http://localhost:3000](http://localhost:3000).
+
+---
+
+## 5. Build de production
+
+```bash
+pnpm build
+pnpm preview   # pour tester le build en local avant déploiement
+```
+
+---
+
+## Déploiement sur Vercel
+
+Le dashboard est déployé automatiquement sur Vercel à chaque push sur la branche principale. Les variables d'environnement de production sont à configurer dans **Vercel → Project → Settings → Environment Variables**.
+
+<Warning>
+Si Vercel est inaccessible depuis ton réseau (ISP bloquant les IP Vercel), utilise **Cloudflare WARP** en local. Pour une solution permanente, envisage une migration vers **Cloudflare Pages**.
+</Warning>
+
+---
+
+## Scripts disponibles
+
+| Script | Commande | Description |
+|--------|----------|-------------|
+| Dev (prod env) | `pnpm dev` | Serveur de dev avec `.env` |
+| Dev (local env) | `pnpm dev:local` | Serveur de dev avec `.env.local` |
+| Build | `pnpm build` | Build de production |
+| Preview | `pnpm preview` | Prévisualiser le build |
+| Lint | `pnpm lint` | Vérification ESLint |
+| Typecheck | `pnpm typecheck` | Vérification TypeScript |
+
+---
+
+## Versions clés
+
+| Package | Version |
+|---------|---------|
+| nuxt | `^4.2.1` |
+| @nuxt/ui | `^4.3.0` |
+| @nuxtjs/supabase | `^2.0.2` |
+| @tiptap/vue-3 | `3.13.0` |
+| @unovis/vue | `^1.6.1` |
+| TypeScript | `^5.9.3` |
+| pnpm | `10.21.0` |
+
+<Warning>
+TipTap 3 nécessite que toutes ses dépendances soient sur la même version. Le fichier `package.json` utilise des `pnpm.overrides` pour forcer la cohérence des versions `@tiptap/*`. Ne modifie pas ces overrides sans tester l'éditeur de cours.
+</Warning>

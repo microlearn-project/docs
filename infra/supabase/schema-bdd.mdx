@@ -1,0 +1,286 @@
+---
+title: Schéma BDD
+description: Structure de la base de données PostgreSQL Supabase d'UTB Learn
+---
+
+# Schéma de la base de données
+
+UTB Learn utilise **PostgreSQL via Supabase**. Voici le schéma complet des 20 tables, organisées par domaine fonctionnel.
+
+---
+
+## Organisation
+
+```
+Référentiels                    Utilisateurs & Auth
+──────────────────              ──────────────────────────
+autorite_superieure             agent
+direction                       admin_sessions
+departement                     user_role
+tag                             role
+
+Contenu pédagogique             Suivi & Résultats
+──────────────────              ──────────────────────────
+module                          suivi_module
+module_tag (pivot)              resultat_quiz
+module_departement (pivot)      reponse_agent
+cours
+document                        Traçabilité
+quiz                            ──────────────────────────
+question                        activity_log
+reponse
+```
+
+---
+
+## Référentiels
+
+### `autorite_superieure`
+
+```
+id_autorite    UUID PK
+designation    varchar UNIQUE
+code           varchar UNIQUE   ← ex: "DG", "DAF"
+actif          bool DEFAULT true
+created_at / updated_at
+```
+
+### `direction`
+
+```
+id_direction   UUID PK
+designation    varchar UNIQUE
+id_autorite    UUID FK → autorite_superieure
+actif          bool DEFAULT true
+deleted_at     (soft-delete)
+created_at / updated_at
+```
+
+### `departement`
+
+```
+id_departement UUID PK
+designation    varchar UNIQUE
+id_direction   UUID FK → direction
+actif          bool DEFAULT true
+deleted_at     (soft-delete)
+created_at / updated_at
+```
+
+### `tag` (catégories)
+
+```
+id_tag         UUID PK
+designation    varchar UNIQUE
+deleted_at     (soft-delete)
+created_at / updated_at
+```
+
+---
+
+## Utilisateurs & Authentification
+
+### `agent`
+
+```
+id_agent       UUID PK
+code_agent     varchar UNIQUE   ← identifiant de connexion mobile
+password_hash  varchar          ← bcrypt, mot de passe initial = code_agent
+nom            varchar
+prenom         varchar
+email          varchar UNIQUE
+actif          bool DEFAULT true
+last_login     timestamp
+id_direction   UUID FK → direction
+id_departement UUID FK → departement
+deleted_at     (soft-delete)
+created_at / updated_at
+```
+
+### `admin_sessions`
+
+```
+id_session     UUID PK
+id_agent       UUID FK → agent
+session_token  text UNIQUE
+user_agent     text
+ip_address     inet
+expires_at     timestamptz      ← 24h après création
+is_active      bool DEFAULT true
+last_activity  timestamptz
+created_at
+```
+
+### `role`
+
+```
+id_role        UUID PK
+designation    varchar UNIQUE   ← "SUPERADMIN", "ADMIN", "FORMATEUR"
+created_at / updated_at
+```
+
+### `user_role`
+
+```
+id_user_role   UUID PK
+id_agent       UUID FK → agent
+id_role        UUID FK → role
+granted_by     UUID FK → agent  ← qui a attribué le rôle
+date_from      timestamp DEFAULT now()
+date_to        timestamp        ← null = illimité
+valide         bool DEFAULT true
+created_at / updated_at
+```
+
+---
+
+## Contenu pédagogique
+
+### `module`
+
+```
+id_module        UUID PK
+titre            varchar
+description      text            ← HTML généré par TipTap
+duree_lecture    varchar         ← ex: "2h30"
+publish          bool DEFAULT false
+publish_at       timestamp       ← date de première publication
+download_enabled bool DEFAULT false
+id_agent         UUID FK → agent ← auteur du module
+deleted_at       (soft-delete)
+created_at / updated_at
+```
+
+### `module_tag` (pivot)
+
+```
+id_tag     UUID FK → tag     ┐ PK composite
+id_module  UUID FK → module  ┘
+```
+
+### `module_departement` (pivot)
+
+```
+id_departement  UUID FK → departement ┐ PK composite
+id_module       UUID FK → module      ┘
+date_attribution timestamp DEFAULT now()
+```
+
+### `cours`
+
+```
+id_cours       UUID PK
+ordre          integer          ← position dans le module
+titre          varchar
+description    text             ← HTML TipTap (texte + vidéos + images)
+documents      ARRAY            ← URLs complètes Supabase Storage
+duree_lecture  varchar          ← estimée automatiquement
+id_module      UUID FK → module
+deleted_at     (soft-delete)
+created_at / updated_at
+```
+
+### `document`
+
+```
+id_document    UUID PK
+fichier        text             ← chemin relatif dans Storage (nettoyé)
+nom_original   text             ← nom original pour affichage
+id_module      UUID FK → module
+created_at / updated_at
+```
+
+### `quiz`
+
+```
+id_quiz      UUID PK
+titre        varchar
+description  varchar
+id_cours     UUID FK → cours UNIQUE  ← 1 quiz max par cours
+created_at / updated_at
+```
+
+### `question`
+
+```
+id_question  UUID PK
+texte        text     ← HTML (formatage TipTap)
+actif        bool DEFAULT true
+id_quiz      UUID FK → quiz
+created_at / updated_at
+```
+
+### `reponse`
+
+```
+id_reponse    UUID PK
+texte         text
+est_correcte  bool DEFAULT false
+explication   text             ← affichée dans la correction mobile
+id_question   UUID FK → question
+created_at / updated_at
+```
+
+---
+
+## Suivi & Résultats
+
+### `suivi_module`
+
+```
+id_agent     UUID FK → agent  ┐ PK composite
+id_module    UUID FK → module ┘
+date_debut   timestamp DEFAULT now()
+date_fin     timestamp
+progression  numeric DEFAULT 0  ← 0 à 100
+updated_at
+```
+
+### `resultat_quiz`
+
+```
+id_agent    UUID FK → agent ┐ PK composite
+id_quiz     UUID FK → quiz  ┘
+score       numeric          ← 0 à 100
+termine     bool DEFAULT false
+date_debut  timestamp
+date_fin    timestamp
+updated_at
+```
+
+### `reponse_agent`
+
+```
+id_agent     UUID FK → agent     ┐ PK composite
+id_question  UUID FK → question  ┘
+id_reponse   UUID FK → reponse
+date_reponse timestamp DEFAULT now()
+```
+
+---
+
+## Traçabilité
+
+### `activity_log`
+
+```
+id_activity_log  UUID PK
+user_id          UUID FK → agent  ← null si action système
+action           varchar          ← ex: "agent_cree", "connexion"
+objet_type       varchar          ← ex: "agent", "module"
+objet_id         UUID             ← ID de l'entité concernée
+meta             JSONB            ← détails libres selon l'action
+created_at       timestamp DEFAULT now()
+```
+
+---
+
+## Conventions générales
+
+| Convention        | Détail                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Soft-delete**   | `deleted_at IS NOT NULL` = supprimé logiquement — tables : `agent`, `direction`, `departement`, `tag`, `module`, `cours` |
+| **Hard-delete**   | `agent` sans dépendances, `reponse`, `question`                                                                          |
+| **UUIDs**         | Toutes les PKs sont des UUID v4                                                                                          |
+| **Timestamps**    | `created_at` et `updated_at` sur toutes les tables, `without time zone` sauf `admin_sessions` (`with time zone`)         |
+| **PK composites** | `suivi_module`, `resultat_quiz`, `reponse_agent`, `module_tag`, `module_departement`                                     |

@@ -1,0 +1,95 @@
+---
+title: Notifications
+description: Consulter et gérer les notifications dans l'application mobile UTB Learn
+---
+
+# Notifications
+
+L'écran des notifications centralise toutes les alertes envoyées à l'agent : nouveaux modules disponibles, rappels de formation et mises à jour de contenu.
+
+---
+
+## Accéder aux notifications
+
+Depuis l'écran d'accueil, appuyer sur l'icône 🔔 en haut à droite du header. Un **badge numérique** indique le nombre de notifications non lues.
+
+```
+Bonjour,
+Marie Dupont          🔔 (2)
+                           ↑
+                    Badge non lues
+```
+
+---
+
+## Interface
+
+### En-tête
+
+```
+←     Notifications     ✓✓
+```
+
+| Élément | Rôle |
+|---------|------|
+| `←` | Retour à l'écran précédent |
+| **Notifications** | Titre de la page |
+| `✓✓` (double coche) | Marquer toutes les notifications comme lues — visible uniquement s'il reste des non lues |
+
+Sous le header, un indicateur affiche le nombre de notifications non lues (ex: **"2 non lues"**). Il disparaît dès que toutes sont lues.
+
+---
+
+## Types de notifications
+
+| Type | Déclencheur | Action au clic |
+|------|-------------|----------------|
+| `new_module` | Un nouveau module est publié dans le département de l'agent | Ouvre la page du module |
+| `module_update` | Un module existant est mis à jour | Ouvre la page du module |
+| `reminder` | Rappel de formation en cours | Ouvre la page du module |
+
+<Note>
+Les notifications sont filtrées par **département** de l'agent. Un agent ne reçoit que les notifications relatives aux modules de son département.
+</Note>
+
+---
+
+## Interactions
+
+### Appuyer sur une notification
+
+- La notification est **marquée comme lue** (via AsyncStorage)
+- L'agent est **redirigé vers le module concerné** si la notification a un `targetId`
+- L'état local est mis à jour instantanément sans rechargement
+
+### Tout marquer comme lu
+
+Appuyer sur l'icône `✓✓` dans le header marque **toutes les notifications** comme lues en une seule action.
+
+### Pull to refresh
+
+Faire glisser la liste vers le bas recharge les notifications depuis Supabase.
+
+<Warning>
+Le pull to refresh et le chargement initial nécessitent une connexion internet. En mode hors-ligne, un message d'erreur s'affiche et la liste reste vide.
+</Warning>
+
+---
+
+## État vide
+
+Si l'agent n'a aucune notification, un écran vide s'affiche :
+
+```
+        🔕
+
+   Aucune notification
+Vous n'avez pas de nouvelles
+        notifications
+```
+
+---
+
+## Comportement au focus
+
+L'écran recharge automatiquement les notifications **à chaque fois qu'il est affiché** (useFocusEffect), pour s'assurer que la liste est toujours à jour après une navigation.

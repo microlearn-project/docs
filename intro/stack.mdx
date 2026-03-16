@@ -1,0 +1,87 @@
+---
+title: Stack technique
+description: Technologies utilisées dans UTB Learn
+---
+
+# Stack technique
+
+UTB Learn repose sur un ensemble de technologies modernes, pensées pour la rapidité de développement, la fiabilité et la maintenabilité.
+
+---
+
+## Vue d'ensemble
+
+```
+Application Mobile          Dashboard Admin         Backend
+─────────────────           ───────────────         ───────
+React Native (Expo)    ←→   Nuxt 4 (Vue 3)     ←→  Supabase
+Expo Router                 Nuxt UI                 PostgreSQL
+AsyncStorage                TipTap 3                Supabase Storage
+expo-video (vidéo)             @nuxt/image             Supabase Auth
+expo-file-system            Pinia                   Edge Functions
+EAS Build                   Vercel (hosting)        pg_cron
+```
+
+---
+
+## Application Mobile
+
+| Couche | Technologie | Rôle |
+|--------|------------|------|
+| Framework | React Native + Expo SDK 54 | Base de l'application Android |
+| Navigation | Expo Router (file-based) | Gestion des routes et écrans |
+| Authentification | Supabase Auth (via AsyncStorage) | Sessions persistantes hors-ligne |
+| Lecture vidéo | `expo-video` | Lecture des cours vidéo |
+| Fichiers | `expo-file-system` + `expo-intent-launcher` | Téléchargement et ouverture de documents |
+| Build | EAS Build (Expo Application Services) | Génération des APK Android |
+| Notifications locales | `expo-notifications` | Rappels de formation |
+
+<Tip>
+L'authentification persiste localement via AsyncStorage pour garantir l'accès à l'app même sans connexion internet au démarrage.
+</Tip>
+
+---
+
+## Dashboard Admin
+
+| Couche | Technologie | Rôle |
+|--------|------------|------|
+| Framework | Nuxt 4 (Vue 3, Composition API) | Base du dashboard web |
+| UI Components | Nuxt UI (v3) | Composants (tables, modals, toasts…) |
+| Éditeur de texte | TipTap 3 (ProseMirror) | Rédaction des cours richement formatés |
+| État global | Pinia | Gestion du state côté client |
+| Hosting | Vercel | Déploiement automatique depuis Git |
+
+<Warning>
+TipTap 3 requiert une configuration `optimizeDeps` dans `nuxt.config.ts` pour éviter un crash lié à l'instanciation multiple de ProseMirror en développement.
+</Warning>
+
+---
+
+## Backend — Supabase
+
+| Service | Usage |
+|---------|-------|
+| **PostgreSQL** | Base de données principale (agents, modules, cours, quiz, logs…) |
+| **Supabase Auth** | Authentification par code agent (email UTB) |
+| **Supabase Storage** | Stockage des vidéos (`cours-videos`) et documents |
+| **Row Level Security (RLS)** | Contrôle d'accès par profil (agent, admin) |
+| **Edge Functions** | Traitements serverless (ex: nettoyage vidéos orphelines) |
+| **pg_cron** | Planification de tâches SQL (ex: appel nightly de `clean-orphan-videos`) |
+
+<Note>
+L'instance Supabase est en **plan Free**. Cela implique des limites sur le stockage (1 Go), les connexions actives et la durée d'exécution des Edge Functions. À surveiller lors de la montée en charge.
+</Note>
+
+---
+
+## Outils de développement
+
+| Outil | Usage |
+|-------|-------|
+| VS Code | Éditeur principal |
+| Supabase CLI | Migrations, sync local/prod, `supabase db dump` |
+| Docker Desktop | Instance Supabase locale |
+| EAS CLI | Build et distribution de l'APK |
+| Postman | Tests des endpoints API |
+| Cloudflare WARP | Contournement des restrictions réseau ISP sur Vercel |

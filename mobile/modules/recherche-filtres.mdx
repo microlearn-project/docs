@@ -1,0 +1,89 @@
+---
+title: Recherche & Filtres
+description: Rechercher et filtrer les modules de formation dans l'application mobile UTB Learn
+---
+
+# Recherche & Filtres
+
+Le panneau de filtrage permet d'affiner la liste des modules selon trois critères : l'**état de la formation**, la **catégorie** et le **département**.
+
+---
+
+## Aperçu
+
+![Panneau de filtrage UTB Learn](/images/mobile/filter-sheet.jpg)
+
+---
+
+## Ouvrir le panneau
+
+Appuyer sur le bouton filtre à droite de la barre de recherche. Le panneau s'anime depuis le bas de l'écran (bottom sheet) et occupe **85% de la hauteur de l'écran**.
+
+Appuyer sur le fond sombre ou tirer le panneau vers le bas le referme sans appliquer de changements.
+
+---
+
+## Section : État des formations
+
+Sélection **exclusive** (un seul état à la fois) parmi 5 options :
+
+| Option | Description | Compteur |
+|--------|-------------|---------|
+| **Tous** | Tous les modules disponibles | Total |
+| **Nouveaux** | Modules jamais commencés | Nb nouveaux |
+| **En cours** | Modules démarrés mais non terminés | Nb en cours |
+| **Terminés** | Modules complétés à 100% | Nb terminés |
+| **Téléchargés** | Modules disponibles hors-ligne | Nb téléchargés |
+
+Chaque option affiche son **compteur en temps réel** (calculé depuis la liste chargée). L'option sélectionnée passe en fond bleu.
+
+---
+
+## Section : Catégories
+
+Sélection **multiple** par tags (ex: Conformité, Relation Client, Sécurité, Digital…). Les tags disponibles sont chargés dynamiquement depuis la base de données.
+
+- Appuyer sur un tag l'active (fond bleu)
+- Appuyer à nouveau le désactive
+- Plusieurs tags peuvent être sélectionnés simultanément
+
+<Note>
+Le filtre catégorie s'applique côté client — il filtre les modules déjà chargés sans refaire d'appel réseau.
+</Note>
+
+---
+
+## Section : Départements
+
+Sélection **multiple** par département (ex: DSI, Conformité, RH…). Contrairement aux catégories, filtrer par département **déclenche un nouvel appel réseau** pour charger les modules de ce département.
+
+<Warning>
+Le filtre département charge des modules **hors de ton département habituel**. La liste est rechargée depuis Supabase à chaque changement de ce filtre.
+</Warning>
+
+---
+
+## Boutons d'action
+
+| Bouton | Comportement |
+|--------|-------------|
+| **Réinitialiser** | Remet tous les filtres à zéro (sauf la recherche texte). Grisé si aucun filtre actif. |
+| **Appliquer** | Ferme le panneau et applique les filtres sélectionnés |
+
+---
+
+## Combinaison recherche + filtres
+
+La recherche textuelle et les filtres fonctionnent **ensemble** :
+
+```
+Texte saisi : "conformité"
+Filtre état : "En cours"
+Filtre catégorie : "Digital"
+
+→ Affiche les modules en cours,
+  contenant "conformité" dans le titre ou les tags,
+  appartenant à la catégorie Digital
+```
+
+Pour tout effacer d'un coup, appuyer sur **"Réinitialiser les filtres"** dans l'état vide de la liste, ou ouvrir le panneau et appuyer sur **Réinitialiser**.

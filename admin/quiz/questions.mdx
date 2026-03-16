@@ -1,0 +1,72 @@
+---
+title: Questions
+description: Gérer les questions d'un quiz dans le dashboard admin UTB Learn
+---
+
+# Questions
+
+Les questions sont gérées directement dans `QuizEditorModal` depuis l'étape 3 de l'éditeur de module.
+
+---
+
+## Types de questions
+
+| Type               | Comportement côté mobile                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| **Choix unique**   | Sélectionner une réponse désélectionne l'autre (radio)                                             |
+| **Choix multiple** | Plusieurs réponses cumulables — le texte "Plusieurs réponses possibles" s'affiche sous la question |
+
+---
+
+## Statuts de quiz par cours
+
+L'étape 3 affiche un badge de statut pour chaque cours :
+
+| Statut              | Badge            | Condition                                                       |
+| ------------------- | ---------------- | --------------------------------------------------------------- |
+| **Chargement...**   | Neutre + spinner | Quiz en cours de récupération                                   |
+| **Pas de quiz**     | Neutre ✗         | Aucun quiz créé                                                 |
+| **Aucune question** | Orange ⚠         | Quiz créé mais `actif = false` ou sans question                 |
+| **X/Y valide(s)**   | Orange ⚠         | Certaines questions invalides (< 2 réponses ou pas de correcte) |
+| **X question(s)**   | Vert ✓           | Toutes les questions actives sont valides                       |
+
+---
+
+## Compteurs globaux (étape 3)
+
+3 cartes affichent en temps réel :
+
+| Carte         | Valeur                                        |
+| ------------- | --------------------------------------------- |
+| **Cours**     | Nombre total de cours du module               |
+| **Avec quiz** | Cours ayant un quiz créé (peu importe l'état) |
+| **Prêts**     | Cours avec toutes les questions valides       |
+
+---
+
+## Validation complète
+
+Pour qu'un cours soit considéré **"Prêt"** :
+
+1. Un quiz existe pour ce cours
+2. Au moins 1 question est **active** (`actif = true`)
+3. Toutes les questions actives sont **valides** (≥ 2 réponses + 1 correcte)
+
+<Note>
+  Les questions inactives (`actif = false`) n'entrent pas
+  dans le calcul de validité. Un quiz avec uniquement des
+  questions inactives affiche le statut "Aucune question"
+  (orange) même si des questions existent.
+</Note>
+
+---
+
+## Explications de réponses
+
+Chaque réponse peut avoir une **explication** optionnelle. Elle s'affiche dans la correction côté mobile (panneau "Résultats détaillés" après le quiz) sous forme de bloc bleu 💡. L'explication est extraite de la première réponse correcte du quiz.
+
+<Tip>
+  Renseigner les explications est fortement recommandé —
+  elles permettent aux agents de comprendre pourquoi leur
+  réponse était incorrecte et d'apprendre de leurs erreurs.
+</Tip>

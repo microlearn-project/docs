@@ -1,0 +1,54 @@
+---
+title: Créer un module
+description: Créer un nouveau module de formation dans le dashboard admin UTB Learn
+---
+
+# Créer un module
+
+La création d'un module se fait en **2 étapes** depuis `/modules/create`. Le bouton **"Nouveau Module"** en haut à droite de la liste des modules y redirige.
+
+---
+
+## Étape 1 — Informations de base
+
+| Champ             | Validation                  | Exemple                        |
+| ----------------- | --------------------------- | ------------------------------ |
+| **Titre**         | Min. 3 caractères, max. 255 | "Introduction à la conformité" |
+| **Durée estimée** | Obligatoire                 | "2h30", "45 min", "1h15"       |
+
+Cliquer sur **"Suivant"** valide les champs via Zod et passe à l'étape 2. L'indicateur d'étapes en haut passe à vert (✓) une fois l'étape 1 validée.
+
+---
+
+## Étape 2 — Description
+
+L'éditeur TipTap (`ModulesCreateEditor`) s'ouvre pour rédiger la description du module. La description est **obligatoire** — une tentative de création sans contenu affiche une erreur toast.
+
+<Note>
+  L'éditeur est remonté proprement à chaque navigation entre
+  les étapes grâce à une clé dynamique (`editorKey`). Cela
+  évite les conflits de state ProseMirror entre l'étape 1 et
+  l'étape 2.
+</Note>
+
+---
+
+## Création côté serveur
+
+`POST /api/module/create` avec :
+
+- `titre`, `duree_lecture`, `description`
+- `id_agent` : l'agent connecté (auteur du module)
+
+Après création réussie, le module est automatiquement redirigé vers `/modules/edit/:id` pour compléter le contenu (cours, quiz, catégories, départements, documents, publication).
+
+---
+
+## Ce qui attend après la création
+
+L'info-box en bas de l'étape 1 rappelle les prochaines étapes disponibles dans l'éditeur :
+
+- Compléter les détails (catégories, services, documents)
+- Ajouter et organiser les cours
+- Créer les quiz pour chaque cours
+- Publier le module

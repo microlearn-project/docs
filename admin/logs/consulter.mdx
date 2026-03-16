@@ -1,0 +1,72 @@
+---
+title: Consulter les logs
+description: Consulter le journal d'activité dans le dashboard admin UTB Learn
+---
+
+# Journal d'activité
+
+Le journal d'activité (`/activitylogs`) trace toutes les actions importantes effectuées par les administrateurs sur la plateforme. Il est accessible depuis la sidebar du dashboard.
+
+---
+
+## KPIs en temps réel
+
+4 cartes affichent les statistiques générales chargées depuis `/api/activity-log/stats` :
+
+| Carte                        | Description                                                      |
+| ---------------------------- | ---------------------------------------------------------------- |
+| **Total activités**          | Nombre total de logs en base                                     |
+| **Aujourd'hui**              | Activités de la journée en cours                                 |
+| **Connexions aujourd'hui**   | Nombre de connexions au dashboard aujourd'hui                    |
+| **Action la plus fréquente** | `top_actions[0].action` — action la plus répétée toutes périodes |
+
+Les stats sont chargées en parallèle des logs au montage (`onMounted`) — une erreur de stats n'empêche pas l'affichage des logs (erreur silencieuse).
+
+---
+
+## Tableau des logs
+
+Chaque entrée affiche :
+
+| Colonne         | Description                                                                   |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Date**        | Horodatage complet (jour, mois, année, heure, minute, seconde)                |
+| **Utilisateur** | Avatar initiales + nom complet + code agent, ou "Système" si `user_id = null` |
+| **Action**      | Badge coloré avec icône (voir couleurs ci-dessous)                            |
+| **Type**        | `objet_type` — type d'entité concernée                                        |
+| **👁**          | Bouton détail → ouvre la modale de détail                                     |
+
+### Couleurs des badges d'action
+
+| Condition                                | Couleur          |
+| ---------------------------------------- | ---------------- |
+| `connexion`                              | Vert             |
+| `deconnexion`                            | Neutre           |
+| Action contenant `cree` ou `attribue`    | Bleu (info)      |
+| Action contenant `supprime` ou `revoque` | Rouge (error)    |
+| Action contenant `modifie`               | Orange (warning) |
+| Autre                                    | Neutre           |
+
+---
+
+## Pagination serveur
+
+La pagination est gérée **côté serveur** via `GET /api/activity-log` avec les paramètres `page` et `limit` (défaut : 10 par page). Les boutons ◀ ▶ appellent directement `loadLogs()` avec la nouvelle page. La pagination n'est visible que si `totalPages > 1`.
+
+```
+Page 1 sur 12 (118 activités)    [◀]  [▶]
+```
+
+<Note>
+  Contrairement aux autres tableaux du dashboard (TanStack
+  Table avec pagination client), le journal utilise une
+  **pagination serveur** pour éviter de charger tous les
+  logs en mémoire. Changer de filtre remet la page à 1
+  automatiquement.
+</Note>
+
+---
+
+## Bouton de rafraîchissement
+
+L'icône 🔄 en haut à droite de la navbar recharge manuellement les logs et les stats. Un spinner s'affiche pendant le chargement.

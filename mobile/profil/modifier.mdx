@@ -1,0 +1,94 @@
+---
+title: Modifier le profil
+description: Mettre à jour ses informations personnelles et son mot de passe dans l'application mobile UTB Learn
+---
+
+# Modifier le profil
+
+La page **"Modifier mon profil"** permet à l'agent de mettre à jour ses informations personnelles et de changer son mot de passe. Elle est accessible depuis l'onglet **Profil**.
+
+---
+
+## Aperçu
+
+![Modifier le profil — informations personnelles](/images/mobile/edit-profile.jpg)
+
+---
+
+## En-tête
+
+L'en-tête affiche un fond **dégradé bleu foncé** avec coins arrondis en bas.
+
+```
+←     Modifier mon profil
+   Mettez à jour vos informations
+```
+
+---
+
+## Section 1 — Informations personnelles
+
+Carte blanche avec icône 👤 (bleu). Contient 3 champs éditables :
+
+| Champ | Validation |
+|-------|-----------|
+| **Prénom** | Obligatoire, non vide |
+| **Nom** | Obligatoire, non vide |
+| **Email** | Obligatoire, format email valide |
+
+Chaque champ affiche un message d'erreur en rouge sous le champ si la validation échoue.
+
+**Bouton "Enregistrer les informations"** (bleu) :
+- Désactivé (opacité 50%) si aucune modification n'a été apportée par rapport aux données actuelles
+- Affiche un spinner pendant la sauvegarde
+- Déclenche `AgentService.updateAgentProfile()` puis rafraîchit le contexte Auth
+
+<Note>
+Le bouton reste grisé tant que les valeurs des champs sont identiques à celles déjà enregistrées. Il s'active dès qu'un champ est modifié.
+</Note>
+
+<Warning>
+La sauvegarde des informations nécessite une **connexion internet**. Un message d'erreur s'affiche si l'agent est hors-ligne.
+</Warning>
+
+---
+
+## Section 2 — Changer le mot de passe
+
+Carte blanche avec icône 🔒 (violet). Contient 3 champs avec toggle visibilité (👁️) :
+
+| Champ | Validation |
+|-------|-----------|
+| **Mot de passe actuel** | Obligatoire |
+| **Nouveau mot de passe** | Min. 6 caractères, différent de l'actuel |
+| **Confirmer le mot de passe** | Doit correspondre au nouveau |
+
+```
+Comportement selon les erreurs :
+
+❌ Mot de passe actuel incorrect   → Erreur sous le champ + toast
+❌ Nouveau = ancien                → Erreur "Doit être différent"
+❌ Confirmation ne correspond pas  → Erreur sous le champ
+```
+
+**Bouton "Changer le mot de passe"** (violet) :
+- Désactivé si aucun des 3 champs n'est rempli
+- Vérifie l'ancien mot de passe en tentant une re-authentification Supabase
+- Met à jour le mot de passe via l'API Supabase Auth (`PUT /auth/v1/user`)
+- Réinitialise les 3 champs après succès
+
+<Note>
+Le processus de changement de mot de passe comporte 3 étapes côté client : (1) vérification de l'ancien mot de passe, (2) récupération du token de session, (3) mise à jour via l'API Supabase Auth.
+</Note>
+
+---
+
+## Bouton retour
+
+Un bouton **"Retour au profil"** (contour bleu) en bas de page permet de revenir à l'écran précédent sans sauvegarder.
+
+---
+
+## Comportement hors-ligne
+
+Les deux sections (informations et mot de passe) nécessitent une connexion internet. Toute tentative de sauvegarde sans connexion affiche un toast d'erreur et bloque l'opération.

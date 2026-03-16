@@ -1,0 +1,135 @@
+---
+title: Build Android (EAS)
+description: Générer et distribuer l'APK Android d'UTB Learn avec EAS Build
+---
+
+# Build Android (EAS)
+
+UTB Learn utilise **EAS Build** (Expo Application Services) pour générer les binaires Android. Cinq profils sont configurés selon le besoin : développement, debug, preview, release et production.
+
+---
+
+## Prérequis
+
+```bash
+# Installer EAS CLI
+npm install -g eas-cli
+
+# Vérifier la version (>= 16.3.0 requis)
+eas --version
+
+# Se connecter à Expo
+eas login
+```
+
+<Note>
+Le fichier `eas.json` exige `eas-cli >= 16.3.0` (`"cli": { "version": ">= 16.3.0" }`). Les versions antérieures peuvent produire des erreurs de configuration.
+</Note>
+
+---
+
+## Profils disponibles
+
+### Vue d'ensemble
+
+| Profil | Output | Distribution | Usage |
+|--------|--------|-------------|-------|
+| `development` | APK Debug | Interne | Dev avec `developmentClient` |
+| `debug` | APK Debug | Interne | Tests internes debug |
+| `preview` | APK Release | Interne | **Distribution interne UTB** |
+| `release` | APK Release | Interne | Release candidate |
+| `production` | AAB | — | Play Store (futur) |
+
+---
+
+### `development` — Client de développement
+
+```bash
+eas build --platform android --profile development
+```
+
+- Output : **APK Debug** (`assembleDebug`)
+- Active `developmentClient: true` — nécessite un build natif installé sur le device
+- À utiliser quand Expo Go ne suffit plus (modules natifs custom)
+
+---
+
+### `debug` — Debug interne
+
+```bash
+eas build --platform android --profile debug
+```
+
+- Output : **APK Debug** (`assembleDebug`)
+- Node.js `20.18.0` fixé
+- Variable `NPM_CONFIG_LEGACY_PEER_DEPS=true` pour la compatibilité des dépendances
+- Distribution interne
+
+---
+
+### `preview` — Distribution interne UTB Recommandé
+
+```bash
+eas build --platform android --profile preview
+```
+
+- Output : **APK Release** (installable directement)
+- Node.js `20.18.0` fixé
+- **C'est ce profil qui est utilisé pour distribuer l'APK aux agents UTB**
+
+<Tip>
+Le profil `preview` génère un APK signé en Release — prêt à être installé directement sur un Android sans passer par le Play Store. C'est le profil standard pour la distribution interne à UTB.
+</Tip>
+
+---
+
+### `release` — Release candidate
+
+```bash
+eas build --platform android --profile release
+```
+
+- Output : **APK Release** (`assembleRelease`)
+- Identique à `preview` mais avec une commande Gradle explicite
+- À utiliser pour les versions candidates avant validation finale
+
+---
+
+### `production` — Play Store
+
+```bash
+eas build --platform android --profile production
+```
+
+- Output : **AAB** (Android App Bundle)
+- Format requis par le Google Play Store
+- Non utilisé actuellement (distribution interne uniquement)
+
+<Warning>
+Le profil `production` génère un **AAB**, non installable directement sur un device. Il est destiné au Play Store uniquement. Pour la distribution interne, utilise toujours `preview` ou `release`.
+</Warning>
+
+---
+
+## Récupérer l'APK
+
+Une fois le build terminé, EAS affiche un lien de téléchargement dans le terminal et sur [expo.dev](https://expo.dev). L'APK peut être :
+
+- Téléchargé directement depuis le lien EAS
+- Partagé par tout moyen (email, lien, serveur interne)
+- Installé sur Android en activant **"Sources inconnues"** dans les paramètres du device
+
+---
+
+## Versions clés
+
+| Paramètre | Valeur |
+|-----------|--------|
+| EAS CLI minimum | `>= 16.3.0` |
+| Node.js (builds) | `20.18.0` |
+| `appVersionSource` | `remote` (géré par EAS) |
+| iOS | Non supporté (profils configurés mais non utilisés) |
+
+<Note>
+`appVersionSource: "remote"` signifie que le numéro de version (`versionCode` Android) est géré automatiquement par EAS et non depuis `app.json`. Il s'incrémente à chaque build sur le serveur EAS.
+</Note>

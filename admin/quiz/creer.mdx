@@ -1,0 +1,72 @@
+---
+title: Créer un quiz
+description: Créer et configurer un quiz pour un cours dans le dashboard admin UTB Learn
+---
+
+# Créer un quiz
+
+Chaque cours peut avoir **un seul quiz**. La création et l'édition se font depuis l'**étape 3** de l'éditeur de module (`/modules/edit/:id`).
+
+---
+
+## Accéder à l'éditeur de quiz
+
+Depuis l'étape 3, chaque cours est listé avec son statut de quiz. Cliquer sur **"Créer un quiz"** ou **"Éditer le quiz"** ouvre `QuizEditorModal`.
+
+Le composant est importé en **asynchrone** (`defineAsyncComponent`) pour éviter les conflits de résolution de composants au chargement de la page.
+
+---
+
+## Structure d'un quiz
+
+```
+Quiz
+ └── Titre (nom du quiz)
+ └── Questions (1 à N)
+      └── Texte de la question (HTML via TipTap)
+      └── Type : choix unique ou choix multiple
+      └── Actif / Inactif
+      └── Réponses (2 minimum)
+           └── Texte de la réponse
+           └── Est correcte (bool)
+           └── Explication (optionnel — affichée dans la correction)
+```
+
+---
+
+## Règles de validité
+
+Une question est **valide** si elle remplit les deux conditions :
+
+- Au moins **2 réponses** définies
+- Au moins **1 réponse marquée comme correcte** (`est_correcte = true`)
+
+Une question peut être **désactivée** (`actif = false`) — elle ne sera pas présentée aux agents mais reste dans le quiz pour une réactivation ultérieure.
+
+---
+
+## Formatage des questions
+
+Le texte des questions supporte le formatage HTML via TipTap (`QuestionTextEditor`) : **gras**, _italique_, souligné. Sur l'application mobile, ce HTML est rendu par `react-native-render-html` avec les styles spécifiques aux questions (centré, `poppinsSemiBold`, taille 20px).
+
+---
+
+## Endpoints quiz
+
+| Action                       | Route                         | Méthode |
+| ---------------------------- | ----------------------------- | ------- |
+| Récupérer le quiz d'un cours | `/api/quiz/by-cours/:coursId` | GET     |
+| Créer un quiz                | `/api/quiz/create`            | POST    |
+| Modifier un quiz             | `/api/quiz/update`            | PATCH   |
+| Créer une question           | `/api/question/create`        | POST    |
+| Modifier une question        | `/api/question/update`        | PATCH   |
+| Supprimer une question       | `/api/question/delete`        | DELETE  |
+| Créer une réponse            | `/api/reponse/create`         | POST    |
+| Modifier une réponse         | `/api/reponse/update`         | PATCH   |
+| Supprimer une réponse        | `/api/reponse/delete`         | DELETE  |
+
+---
+
+## Chargement à la demande
+
+Les quiz sont chargés **cours par cours à la demande** via `loadQuizForCours()`. Un quiz déjà chargé n'est pas re-fetché (vérification `quizByCoursId[coursId] !== undefined`). Après fermeture du `QuizEditorModal`, le quiz est forcé à se recharger en supprimant son entrée du cache local (`delete quizByCoursId[coursId]`).

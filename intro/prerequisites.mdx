@@ -1,0 +1,121 @@
+---
+title: Prérequis
+description: Outils à installer avant de démarrer le développement UTB Learn
+---
+
+# Prérequis
+
+Avant de cloner et lancer UTB Learn en local, assure-toi que les outils suivants sont installés sur ta machine.
+
+---
+
+## 1. Node.js & pnpm
+
+| Outil | Version minimale | Utilisé pour |
+|-------|-----------------|--------------|
+| Node.js | `>= 20.x` | Dashboard admin + scripts |
+| pnpm | `10.21.0` | Package manager du dashboard |
+| npm | bundled avec Node | App mobile (Expo) |
+
+```bash
+# Vérifier les versions installées
+node -v
+pnpm -v
+npm -v
+```
+
+Pour installer pnpm si absent :
+```bash
+npm install -g pnpm@10.21.0
+```
+
+<Tip>
+Utilise [nvm](https://github.com/nvm-sh/nvm) ou [fnm](https://github.com/Schniz/fnm) pour gérer plusieurs versions de Node.js sur la même machine.
+</Tip>
+
+---
+
+## 2. Supabase CLI
+
+La Supabase CLI est indispensable pour gérer les migrations, synchroniser le schéma local/prod et générer des dumps de la base de données.
+
+```bash
+# Installation via npm (global)
+npm install -g supabase
+
+# Vérifier
+supabase --version
+# → supabase 2.x.x
+```
+
+<Note>
+Le dashboard utilise `supabase@^2.64.2` en devDependency. Assure-toi que ta CLI globale est sur la même version majeure pour éviter des incompatibilités lors des migrations.
+</Note>
+
+---
+
+## 3. Docker Desktop
+
+Docker est requis pour faire tourner l'instance Supabase en local (base de données, Auth, Storage, Edge Functions).
+
+- Télécharger : [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+- Version recommandée : **Docker Desktop 4.x+**
+
+```bash
+# Vérifier que Docker tourne
+docker info
+```
+
+<Warning>
+Si tu es sur Windows avec **Hyper-V activé**, l'émulateur Android d'Expo Go peut entrer en conflit avec Docker Desktop. Dans ce cas, désactive Hyper-V pour les sessions de test mobile ou utilise un device physique Android.
+</Warning>
+
+---
+
+## 4. EAS CLI + compte Expo
+
+EAS (Expo Application Services) est utilisé pour builder et distribuer l'APK Android.
+
+```bash
+# Installation globale
+npm install -g eas-cli
+
+# Vérifier
+eas --version
+
+# Se connecter à son compte Expo
+eas login
+```
+
+- Créer un compte Expo (gratuit) : [https://expo.dev](https://expo.dev)
+- Le projet UTBLearn est lié à un `slug` défini dans `app.json`
+
+<Note>
+Le plan gratuit Expo permet de générer des builds Android. Assure-toi que le projet est correctement configuré dans `eas.json` avec les profils `preview`, `release` et `production`.
+</Note>
+
+---
+
+## 5. Expo Go (tests mobile)
+
+Pour tester rapidement l'app sur un device physique sans générer d'APK :
+
+- Installer **Expo Go** depuis le Play Store sur ton téléphone Android
+- L'app se connecte au serveur de développement via QR code (`expo start`)
+
+<Warning>
+Expo Go ne supporte pas les modules natifs custom (comme `expo-dev-client`). Pour tester des features nécessitant un build natif, utilise un **development build** via `eas build --profile preview`.
+</Warning>
+
+---
+
+## Récapitulatif rapide
+
+| Outil | Obligatoire pour | Optionnel |
+|-------|-----------------|-----------|
+| Node.js 20+ | Dashboard + Mobile | — |
+| pnpm 10.21.0 | Dashboard | — |
+| Supabase CLI | Dev local + migrations | — |
+| Docker Desktop | Supabase local | Prod uniquement |
+| EAS CLI | Build APK | — |
+| Expo Go | Tests rapides mobile | Build natif |

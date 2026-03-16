@@ -1,0 +1,127 @@
+---
+title: Connexion
+description: Se connecter au dashboard d'administration UTB Learn
+---
+
+# Connexion
+
+La page de connexion est le point d'entrée du dashboard admin. Elle supporte deux modes d'identification et gère les conflits de sessions actives.
+
+---
+
+## Aperçu
+
+![Page de connexion — Dashboard Admin](/images/admin/login-screen.jpg)
+
+---
+
+## Modes de connexion
+
+Un toggle en haut du formulaire permet de choisir entre deux modes :
+
+| Mode | Champ | Icône |
+|------|-------|-------|
+| **Code agent** (défaut) | Code agent de l'agent | `#` |
+| **Email** | Adresse email UTB | ✉️ |
+
+Basculer entre les deux modes efface le champ identifiant.
+
+---
+
+## Formulaire
+
+```
+┌──────────────────────────────────────┐
+│  [# Code agent]    [✉ Email]         │  ← Toggle
+├──────────────────────────────────────┤
+│  Code agent / Email                  │
+│  [________________________]          │
+│                                      │
+│  Mot de passe                        │
+│  [••••••••••••••]          👁        │
+│                                      │
+│       [ Se connecter ]               │
+└──────────────────────────────────────┘
+```
+
+Le bouton **Se connecter** affiche un spinner pendant l'authentification.
+
+---
+
+## Processus d'authentification
+
+La connexion passe par **9 étapes côté serveur** (`POST /api/auth/login`) :
+
+```
+1. Validation des champs (identifiant + mot de passe)
+2. Recherche de l'agent en BDD (par email ou code_agent)
+3. Vérification du hash du mot de passe
+4. Vérification que le compte est actif (agent.actif = true)
+5. Vérification du rôle valide (user_role.valide = true, date valide)
+6. Détection des sessions actives (table admin_sessions)
+7. Si forceLogin → désactivation des sessions existantes
+8. Création d'une nouvelle session (token UUID, expiration 24h)
+9. Log de connexion dans activity_log
+```
+
+<Note>
+La session expire après **24 heures**. Elle est stockée dans la table `admin_sessions` avec le token, le User-Agent, l'IP et un flag `is_active`.
+</Note>
+
+---
+
+## Gestion des sessions actives
+
+Si l'agent tente de se connecter alors qu'**une session est déjà ouverte** sur un autre navigateur ou appareil, une modale d'avertissement s'affiche :
+
+```
+⚠️  Une session est déjà ouverte
+
+   Connecté depuis : 15/03/2026 09:30:00
+   Dernière activité : 15/03/2026 11:45:00
+
+   Si vous continuez, l'autre session sera
+   automatiquement fermée.
+
+   [Annuler]    [Continuer et fermer l'autre session]
+```
+
+| Action | Comportement |
+|--------|-------------|
+| **Annuler** | Ferme la modale, efface le mot de passe saisi |
+| **Continuer** | Envoie `forceLogin: true` → désactive toutes les sessions existantes → crée une nouvelle session |
+
+---
+
+## Erreurs possibles
+
+| Erreur | Message affiché |
+|--------|----------------|
+| Identifiant vide | "Veuillez entrer votre code agent / email" |
+| Mot de passe vide | "Veuillez entrer votre mot de passe" |
+| Code agent invalide | "Code agent invalide" |
+| Email invalide | "Email invalide" |
+| Mot de passe incorrect | "Mot de passe incorrect" |
+| Compte désactivé | "Votre compte est désactivé. Contactez un administrateur." |
+| Aucun rôle valide | "Vous n'avez pas les droits d'accès à l'interface d'administration." |
+
+---
+
+## Déconnexion
+
+La déconnexion (`POST /api/auth/logout`) :
+1. Récupère le `session_token` depuis le cookie
+2. Met `is_active = false` dans `admin_sessions`
+3. Log la déconnexion dans `activity_log`
+4. Efface le cookie de session
+5. Redirige vers `/login`
+
+<Warning>
+Si un administrateur ferme l'onglet sans se déconnecter, la session reste active en BDD jusqu'à expiration (24h). La prochaine connexion depuis un autre appareil déclenchera la modale de conflit de session.
+</Warning>
+
+---
+
+## Redirection automatique
+
+Si un utilisateur déjà authentifié accède à `/login`, il est **automatiquement redirigé** vers `/` (tableau de bord) sans afficher le formulaire.

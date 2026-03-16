@@ -1,0 +1,88 @@
+---
+title: Gestion des directions
+description: Gérer les directions dans le dashboard admin UTB Learn
+---
+
+# Gestion des directions
+
+Les directions (table `direction`) représentent les entités organisationnelles de haut niveau d'UTB. Chaque direction peut être rattachée à une **autorité supérieure**. Elles sont gérées depuis `/directions`.
+
+---
+
+## Tableau
+
+| Colonne                   | Description                                     |
+| ------------------------- | ----------------------------------------------- |
+| **Désignation**           | Nom de la direction                             |
+| **Autorité Supérieure**   | Autorité de rattachement avec badge code coloré |
+| **Statut**                | Badge vert Actif / rouge Inactif                |
+| **Dernière modification** | Date/heure                                      |
+| **Créé le**               | Date/heure                                      |
+
+Recherche sur la **Désignation**. Filtre statut : Tous / Actif / Inactif. Pagination : 10 lignes par page.
+
+---
+
+## Autorité supérieure
+
+Chaque direction peut être rattachée à une `autorite_superieure`. L'autorité est affichée avec :
+
+- Un badge code court (ex: **DG** en bleu primaire, autres en bleu info)
+- Le nom complet de l'autorité
+
+Les autorités sont chargées depuis `/api/autorite-superieure` et résolues via un `Map` en mémoire pour l'affichage sans jointure supplémentaire.
+
+---
+
+## Ajouter une direction
+
+Bouton **"Ajouter"** → `DirectionsAddModal`. L'événement `@adddepartement` déclenche le `refresh()`.
+
+`POST /api/departement/adddepartement`
+
+<Note>
+  L'endpoint est sous `/api/departement/` (héritage du
+  nommage avant le refactoring direction/département). La
+  table cible est bien `direction`.
+</Note>
+
+---
+
+## Modifier une direction
+
+Sélectionner **1 ligne** → bouton "Modifier" → `DirectionsUpdateModal`.
+
+L'événement émis est `@updatedepartement` (héritage du refactoring).
+
+`PATCH /api/departement/updatedepartement`
+
+---
+
+## Supprimer une direction
+
+Menu `⋮` ou sélection multiple → `DirectionsDeleteModal`.
+
+`PATCH /api/departement/soft-delete`
+
+Suppression locale immédiate dans le tableau après succès.
+
+<Warning>
+  Supprimer une direction affecte les agents et départements
+  qui lui sont rattachés (`id_direction`). Vérifiez les
+  dépendances avant suppression.
+</Warning>
+
+---
+
+## Relation avec les départements
+
+Chaque **département** appartient à une direction (`departement.id_direction`). La hiérarchie est donc :
+
+```
+Autorité Supérieure
+    └── Direction
+            └── Département
+                    └── Agent
+```
+
+Cette hiérarchie est utilisée pour l'affectation des agents et le filtrage des modules par département.

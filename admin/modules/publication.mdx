@@ -1,0 +1,108 @@
+---
+title: Quiz & Publication
+description: Gérer les quiz des cours et publier un module dans le dashboard admin UTB Learn
+---
+
+# Quiz & Publication
+
+---
+
+## Étape 3 — Quiz du module
+
+L'étape 3 de l'éditeur liste tous les cours du module avec le statut de leur quiz. Chaque cours peut avoir **un seul quiz**.
+
+### Statuts de quiz
+
+| Statut              | Badge  | Condition                                                                  |
+| ------------------- | ------ | -------------------------------------------------------------------------- |
+| **Pas de quiz**     | Neutre | Aucun quiz créé pour ce cours                                              |
+| **Aucune question** | Orange | Quiz créé mais sans question active                                        |
+| **Incomplet**       | Orange | `X/Y valide(s)` — certaines questions n'ont pas 2 réponses dont 1 correcte |
+| **Prêt**            | Vert   | Toutes les questions actives sont valides                                  |
+
+### Règles de validité d'une question
+
+Une question est valide si elle a :
+
+- Au moins **2 réponses**
+- Au moins **1 réponse marquée correcte** (`est_correcte = true`)
+
+### Compteurs globaux
+
+3 cartes en haut de l'étape affichent :
+
+- **Total cours** dans le module
+- **Cours avec quiz** (quiz créé, peu importe l'état)
+- **Quiz prêts** (toutes les questions valides)
+
+### Créer / Éditer un quiz
+
+Le bouton **"Créer un quiz"** ou **"Éditer le quiz"** ouvre `QuizEditorModal` qui permet de :
+
+- Nommer le quiz
+- Ajouter des questions (formatage HTML via TipTap)
+- Ajouter des réponses avec indication de la bonne réponse et explication optionnelle
+- Activer / désactiver des questions individuellement
+
+Les quiz sont chargés **à la demande** (`lazy`) par cours pour éviter les requêtes groupées.
+
+---
+
+## Étape 4 — Aperçu & Publication
+
+L'étape 4 présente un résumé du module avec un aperçu de la description (HTML rendu via `v-html`) avant publication.
+
+### États possibles
+
+**Module non publié :**
+
+```
+⚠️  Module non publié
+    Ce module n'est pas encore visible par les utilisateurs.
+
+    [Précédent]    [Publier le module]  [Terminer]
+```
+
+**Module déjà publié :**
+
+```
+✅  Module déjà publié
+    Publié le 15 mars 2026 à 09:30
+
+    [Précédent]    [Terminer]
+```
+
+### Publication (`PATCH /api/module/publish`)
+
+La publication :
+
+1. Met `module.publish = true`
+2. Enregistre `module.publish_at = now()` (date de première publication)
+3. Rend le module visible dans l'app mobile pour les agents des départements associés
+
+Après succès → `emit('finish')` → redirection vers `/modules`.
+
+---
+
+## Publication depuis la liste des modules
+
+La publication est aussi accessible directement depuis le menu `⋮` de la liste sans passer par l'éditeur :
+
+| État du module      | Action disponible                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| Jamais publié       | **Publier** → ouvre `PublishModal`                                                 |
+| Publié, puis retiré | **Republier** → `PATCH /api/module/:id/republish` (conserve `publish_at` original) |
+| Publié              | **Retirer** → `PATCH /api/module/:id/unpublish`         |
+
+<Warning>
+  Le **retrait** d'un module publié est réservé aux
+  SUPERADMIN. Une tentative depuis un rôle ADMIN ou
+  FORMATEUR affiche une erreur "Seul un SUPERADMIN peut
+  retirer un module publié."
+</Warning>
+
+---
+
+## Toggle téléchargement (SUPERADMIN uniquement)
+
+Depuis le menu `⋮`, un SUPERADMIN peut activer ou désactiver le **téléchargement hors-ligne** du module via `PATCH /api/module/:id/toggle-download`. La colonne "Téléchargeable ?" dans le tableau affiche OUI/NON. La mise à jour est appliquée localement sans rechargement.

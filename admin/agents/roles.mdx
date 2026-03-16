@@ -1,0 +1,85 @@
+---
+title: Rôles & permissions
+description: Gestion des rôles des agents dans le dashboard admin UTB Learn
+---
+
+# Rôles & permissions
+
+Les rôles contrôlent l'accès au dashboard admin. Chaque agent peut se voir attribuer un rôle via la table `user_role`.
+
+---
+
+## Rôles disponibles
+
+| Rôle           | Accès dashboard | Particularités                                                                |
+| -------------- | --------------- | ----------------------------------------------------------------------------- |
+| **SUPERADMIN** | Complet         | Seul rôle pouvant réinitialiser les mots de passe des agents                  |
+| **ADMIN**      | Complet         | Gestion agents, modules, quiz, catégories                                     |
+| **FORMATEUR**  | Restreint       | Création de contenu uniquement — pas d'actions rapides, pas de gestion agents |
+
+<Note>
+  Un agent sans rôle valide dans `user_role` ne peut **pas**
+  se connecter au dashboard, même avec des identifiants
+  corrects. L'erreur retournée est : "Vous n'avez pas les
+  droits d'accès à l'interface d'administration."
+</Note>
+
+---
+
+## Structure d'un rôle (table `user_role`)
+
+```
+user_role
+──────────────────────────────
+id_user_role
+id_agent      (FK → agent)
+id_role       (FK → role)
+valide        (bool)
+date_from     (datetime)
+date_to       (datetime, nullable = illimité)
+created_at
+```
+
+Un rôle est actif si :
+
+- `valide = true`
+- `date_from <= maintenant`
+- `date_to IS NULL` **ou** `date_to >= maintenant`
+
+---
+
+## Réinitialisation de mot de passe (SUPERADMIN uniquement)
+
+L'action **"Réinitialiser le mot de passe"** est visible dans le menu `⋮` de chaque ligne **uniquement pour les SUPERADMIN**.
+
+```
+PATCH /api/agent/:id/reset-password
+```
+
+Le nouveau mot de passe est réinitialisé au **code agent** de l'agent (`agent.code_agent`). Il est hashé avec la même fonction que lors de la création (`hashPassword()`).
+
+Après succès, un toast affiche le nouveau mot de passe :
+
+```
+Mot de passe réinitialisé
+"Le nouveau mot de passe est: A3F7K2"
+```
+
+<Warning>
+  Cette action est irréversible et loggée dans
+  `activity_log` avec l'action `agent_password_reset`. Seul
+  un SUPERADMIN peut l'exécuter — une tentative depuis un
+  rôle ADMIN ou FORMATEUR retourne une erreur **403**.
+</Warning>
+
+---
+
+## Attribution des rôles
+
+Les rôles sont gérés depuis la page **Permissions** (`/permissions`) du dashboard — hors scope de la section Agents. Un agent peut avoir plusieurs entrées dans `user_role` mais seule la plus récente avec `valide = true` et les dates valides est prise en compte à la connexion.
+
+---
+
+## Copier le code agent
+
+Le menu `⋮` de chaque ligne propose aussi **"Copier le code agent"** qui copie le `code_agent` dans le presse-papier. Utile pour retrouver rapidement l'identifiant d'un agent sans ouvrir le formulaire de modification.

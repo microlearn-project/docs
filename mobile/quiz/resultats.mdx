@@ -1,0 +1,124 @@
+---
+title: Résultats du quiz
+description: Consulter les résultats et la correction d'un quiz dans l'application mobile UTB Learn
+---
+
+# Résultats du quiz
+
+La page de résultats s'affiche immédiatement après la soumission d'un quiz. Elle présente le score, les points obtenus et les actions disponibles selon la réussite ou l'échec.
+
+---
+
+## Aperçu
+
+![Résultats du quiz](/images/mobile/n-3.jpg)
+
+---
+
+## Écran de résultats
+
+L'écran s'affiche sur fond **dégradé bleu foncé** avec une animation Lottie en haut.
+
+### Titre
+
+| Résultat                     | Titre affiché     |
+| ---------------------------- | ----------------- |
+| Quiz réussi (score ≥ seuil)  | **Quiz réussi!**  |
+| Quiz terminé (score < seuil) | **Quiz terminé!** |
+
+### Carte résultat
+
+Une carte blanche **"Ton résultat"** affiche deux indicateurs :
+
+| Indicateur    | Icône       | Description                       |
+| ------------- | ----------- | --------------------------------- |
+| **Points**    | ⭐ (violet) | Points obtenus sur ce quiz        |
+| **Questions** | ✅ (vert)   | Bonnes réponses / total (ex: 2/5) |
+
+<Note>
+  Le compteur de questions inclut les réponses **correctes
+  et partiellement correctes** (`correctAnswers +
+  partialAnswers`).
+</Note>
+
+---
+
+## Actions disponibles
+
+### Bouton principal (dynamique)
+
+Le bouton principal blanc change selon la situation :
+
+| Situation                              | Texte du bouton         | Action                             |
+| -------------------------------------- | ----------------------- | ---------------------------------- |
+| Quiz réussi + cours suivant disponible | **Cours suivant**       | Ouvre le cours suivant du module   |
+| Quiz réussi + dernier cours            | **Retourner au module** | Retour à la page du module         |
+| Quiz échoué                            | **Réessayer**           | Recommence le quiz depuis le début |
+
+### Bouton secondaire
+
+Un bouton secondaire **"Retourner au module"** (contour blanc) s'affiche uniquement quand :
+
+- Le quiz est réussi **et** un cours suivant existe (pour offrir le choix)
+- Le quiz est échoué (le bouton principal est "Réessayer", le secondaire permet de revenir au module sans recommencer)
+
+### Lien "Voir les réponses"
+
+Un lien souligné **"Voir les réponses"** ouvre le panneau de correction détaillé.
+
+---
+
+## Panneau de correction détaillé
+
+![Résultats détaillés — corrections](/images/mobile/answers-modal.jpg)
+
+Le panneau **"Résultats détaillés"** s'anime depuis le bas et occupe **90% de l'écran**. Il affiche toutes les questions groupées en deux sections.
+
+### Questions incorrectes (fond rouge clair)
+
+Pour chaque question ratée :
+
+```
+🔴 1   Question incorrecte
+───────────────────────────────────
+Texte de la question
+
+┌─ ✕ Ta réponse ───────────────┐
+│  Augmenter les revenus...    │  ← Fond blanc, bordure rouge
+└──────────────────────────────┘
+
+┌─ ✓ Réponse correcte ─────────┐
+│  Empêcher l'utilisation...   │  ← Fond blanc, bordure verte
+└──────────────────────────────┘
+
+💡 Explication
+   La LCB-FT vise à empêcher...  ← Fond bleu clair, italique
+```
+
+### Questions réussies (fond vert clair)
+
+Pour chaque question correcte, affichage simplifié :
+
+```
+🟢 3   Réponse correcte
+───────────────────────────────────
+Texte de la question
+
+┌─ ✓ Ta réponse ───────────────┐
+│  Bonne réponse sélectionnée  │  ← Fond blanc, bordure verte
+└──────────────────────────────┘
+
+💡 Explication (si disponible)
+```
+
+<Note>
+  L'explication est définie au niveau de chaque réponse dans
+  le dashboard admin. Elle s'affiche uniquement si une
+  explication a été renseignée pour la bonne réponse.
+</Note>
+
+---
+
+## Mise à jour de la progression
+
+Après soumission d'un quiz réussi, la **progression du module** est recalculée automatiquement. Lorsque l'agent retourne à l'accueil, le flag `needsHomeRefresh` déclenche un rechargement des statistiques pour refléter les nouvelles données (modules terminés, score moyen, points totaux).

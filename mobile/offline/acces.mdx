@@ -1,0 +1,88 @@
+---
+title: Accéder aux modules hors-ligne
+description: Consulter les modules téléchargés sans connexion dans UTB Learn
+---
+
+# Accéder aux modules hors-ligne
+
+---
+
+## Écran "Modules téléchargés"
+
+L'écran **"Modules téléchargés"** liste tous les modules disponibles hors-ligne. Il est accessible depuis le profil ou la navigation principale.
+
+### En-tête
+
+En-tête dégradé bleu foncé avec :
+
+- Titre **"Modules téléchargés"**
+- Sous-titre dynamique : **"Accessibles hors ligne"** (si connecté) ou **"Mode hors ligne actif"** (si hors-ligne)
+
+### Carte de stockage
+
+Une carte blanche flottante (overlap sur le header) affiche :
+
+```
+💾  Espace utilisé
+    ████████░░░░░░░░░  12.4 Mo
+
+    3 modules téléchargés        [Gérer le stockage]
+```
+
+- La barre de progression est calculée sur une base de **500 Mo** (limite indicative)
+- La taille est formatée par `StorageService.formatSize()`
+- **"Gérer le stockage"** active le mode gestion (affiche les boutons de suppression sur chaque carte)
+
+### Liste des modules
+
+Chaque module est affiché sous forme de carte avec :
+
+- Titre, description, tags, durée
+- Date de téléchargement relative (ex: "Téléchargé hier")
+- En mode gestion : bouton 🗑️ rouge pour supprimer
+
+---
+
+## Ouvrir un module hors-ligne
+
+Appuyer sur une carte en mode normal navigue vers la page de détails du module avec le paramètre `offline: "true"` :
+
+```
+router.push({
+  pathname: `/(main)/module/${moduleId}`,
+  params: { offline: "true" }
+})
+```
+
+Le module se charge alors depuis le **stockage local** (`OfflineService.getOfflineModule()`) sans appel réseau.
+
+---
+
+## Contenu accessible hors-ligne
+
+| Contenu                                      | Disponible hors-ligne   |
+| -------------------------------------------- | ----------------------- |
+| Détails du module (titre, description, tags) | **OUI**                      |
+| Liste des cours avec ordre                   | **OUI**                      |
+| Contenu HTML des cours (texte, images)       | **OUI**                      |
+| Vidéos embarquées dans les cours             | **OUI** (depuis refactoring) |
+| Documents annexes (PDF, images)              | **OUI**                      |
+| Progression (`suivi_module`)                 | **NON** Requiert connexion   |
+| Quiz                                         | **NON** Requiert connexion   |
+| Notifications                                | **NON** Requiert connexion   |
+
+<Note>
+  Les métadonnées sont stockées dans un fichier JSON local
+  par module. Les fichiers médias (documents, vidéos) sont
+  dans un dossier dédié dans `expo-file-system`. La liste
+  des modules téléchargés est chargée au démarrage de l'app
+  via `DownloadContext`.
+</Note>
+
+---
+
+## Navigation depuis d'autres écrans
+
+Depuis la liste des modules, le filtre **"Téléchargés"** affiche uniquement les modules disponibles hors-ligne. La carte de chaque module téléchargé affiche une coche verte ✅ à la place de l'icône de téléchargement.
+
+Depuis la page de détails d'un module hors-ligne, le bouton "Continuer la formation" ouvre les cours en mode offline — sans appel Supabase.

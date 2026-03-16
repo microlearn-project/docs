@@ -1,0 +1,155 @@
+---
+title: Installation — App Mobile
+description: Lancer l'application mobile UTB Learn en développement
+---
+
+# Installation — App Mobile
+
+L'application mobile est construite avec **React Native + Expo SDK 54**. Elle tourne sur Android via Expo Go pour le développement, et via un APK généré par EAS pour la distribution interne.
+
+---
+
+## Prérequis
+
+- Node.js `>= 20.x`
+- npm (bundlé avec Node)
+- Expo Go installé sur un device Android (pour les tests rapides)
+- EAS CLI pour les builds natifs
+
+---
+
+## 1. Cloner le repo & installer les dépendances
+
+```bash
+git clone <url-du-repo>
+cd mobile
+
+npm install
+```
+
+---
+
+## 2. Configurer les variables d'environnement
+
+```bash
+cp .env.example .env
+```
+
+Renseigne les variables Supabase dans `.env` (voir [Variables d'environnement](/intro/env-vars)) :
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
+```
+
+<Warning>
+Si tu testes sur un **device physique**, utilise l'IP LAN de ta machine de dev (ex: `http://192.168.1.x:54321`) et non `localhost` pour pointer vers un Supabase local.
+</Warning>
+
+---
+
+## 3. Lancer l'application
+
+### Via Expo Go (tests rapides)
+
+```bash
+npx expo start
+```
+
+Scanne le QR code affiché dans le terminal avec **Expo Go** sur ton Android.
+
+```bash
+# Lancer directement sur Android (device connecté en USB ou émulateur)
+npx expo start --android
+```
+
+<Note>
+Expo Go ne supporte pas les modules natifs custom. Si l'app utilise des features nécessitant un build natif, utilise un development build (voir section Build ci-dessous).
+</Note>
+
+<Warning>
+Si tu utilises **Hyper-V** (Windows) avec Docker Desktop, l'émulateur Android peut ne pas démarrer correctement. Préfère un device physique dans ce cas.
+</Warning>
+
+---
+
+## 4. Build & Distribution (EAS)
+
+### Configurer EAS
+
+```bash
+# Se connecter à Expo
+eas login
+
+# Lier le projet (si pas encore fait)
+eas init
+```
+
+### Générer un APK (distribution interne)
+
+```bash
+# Build preview (APK installable directement)
+eas build --platform android --profile preview
+
+# Build release (AAB pour le Play Store)
+eas build --platform android --profile release
+```
+
+Les profils sont définis dans `eas.json` :
+
+```json
+{
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "release": {
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  }
+}
+```
+
+<Tip>
+Pour la distribution interne à UTB, utilise toujours le profil `preview` qui génère un **APK** directement installable sans passer par le Play Store.
+</Tip>
+
+---
+
+## Scripts disponibles
+
+| Script | Commande | Description |
+|--------|----------|-------------|
+| Démarrer | `npx expo start` | Serveur de dev Expo |
+| Android | `npx expo start --android` | Lancer sur Android |
+| Build preview | `eas build --profile preview` | APK distribution interne |
+| Build release | `eas build --profile release` | AAB Play Store |
+
+---
+
+## Versions clés
+
+| Package | Version |
+|---------|---------|
+| expo | `~54.0.31` |
+| react-native | `0.81.5` |
+| react | `19.1.0` |
+| expo-router | `~6.0.22` |
+| expo-video | `~3.0.16` |
+| @supabase/supabase-js | `^2.90.0` |
+| expo-file-system | `~19.0.21` |
+| expo-intent-launcher | `~13.0.8` |
+| TypeScript | `~5.9.2` |
+
+<Note>
+L'app utilise **`expo-video`** (et non `expo-av`) pour la lecture des cours vidéo. Ne pas confondre les deux packages — `expo-av` n'est pas installé dans ce projet.
+</Note>

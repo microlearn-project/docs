@@ -1,0 +1,77 @@
+---
+title: Documents annexes
+description: Consulter et ouvrir les documents annexes d'un cours dans l'application mobile UTB Learn
+---
+
+# Documents annexes
+
+Chaque cours peut contenir des **documents annexes** : supports de cours PDF, images, fiches pratiques, etc. Ces fichiers complètent le contenu textuel et vidéo du cours.
+
+---
+
+## Où trouver les documents
+
+Les documents s'affichent en bas de la page d'un cours, dans la section **"Documents annexes"**, après le contenu HTML du cours.
+
+```
+[ Contenu du cours ]
+
+Documents annexes
+┌──────────────────────────────┐
+│ 📄  Support de cours.pdf     │
+│     2.4 MB                   │
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│ 🖼️  Infographie récap.png    │
+│     856 KB                   │
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│ 📄  Checklist pratique.pdf   │
+│     1.1 MB                   │
+└──────────────────────────────┘
+```
+
+---
+
+## Types de fichiers supportés
+
+| Type | Icône | Couleur |
+|------|-------|---------|
+| PDF | 📄 | Rouge |
+| Image (PNG, JPG) | 🖼️ | Bleu |
+| Autre | 📎 | Vert |
+
+---
+
+## Ouvrir un document
+
+Appuyer sur une carte document le télécharge temporairement et l'ouvre avec **l'application native** du téléphone (visionneuse PDF, galerie, etc.) via `expo-intent-launcher`.
+
+Pendant l'ouverture, un **spinner de chargement** remplace l'icône du document concerné. Les autres documents restent cliquables.
+
+```
+Comportement selon la situation :
+
+Application compatible installée  → Ouverture directe
+Aucune application compatible     → Message d'erreur (toast)
+Ouverture déjà en cours          → Tap ignoré (anti double-clic)
+```
+
+<Warning>
+Si le device ne dispose pas d'une application capable d'ouvrir le type de fichier (ex: pas de visionneuse PDF installée), l'ouverture échouera avec le message : **"Impossible d'ouvrir le document"**.
+</Warning>
+
+---
+
+## Mode hors-ligne
+
+Quand un module est **téléchargé**, les documents annexes sont stockés localement dans le système de fichiers du device (`expo-file-system`). Ils s'ouvrent de la même façon, depuis leur **chemin local** au lieu d'une URL Supabase.
+
+| Mode | Source du fichier |
+|------|------------------|
+| En ligne | URL signée Supabase Storage |
+| Hors-ligne | Fichier local `expo-file-system` |
+
+<Note>
+Le nom du fichier affiché correspond au champ `name` défini lors de l'upload dans le dashboard admin — pas nécessairement au nom du fichier dans Supabase Storage.
+</Note>

@@ -1,0 +1,103 @@
+---
+title: Accueil
+description: Page d'accueil de l'application mobile UTB Learn
+---
+
+# Accueil
+
+L'écran d'accueil est le tableau de bord personnel de l'agent. Il regroupe ses **statistiques de progression**, ses **modules en cours** et une sélection de **modules recommandés** selon son département.
+
+---
+
+## Aperçu
+
+![Écran d'accueil UTB Learn](/images/mobile/home-screen.jpg)
+
+---
+
+## Composants de la page
+
+### En-tête
+
+L'en-tête affiche le nom de l'agent connecté et l'icône de notifications avec un badge indiquant le nombre de notifications non lues.
+
+```
+Bonjour,
+Marie Dupont          🔔 (2)
+```
+
+---
+
+### Carte de statistiques
+
+Juste sous l'en-tête, une carte affiche les **3 indicateurs clés** de progression de l'agent :
+
+| Indicateur | Description |
+|------------|-------------|
+| **Modules terminés** | Nombre de modules complétés |
+| **Point Total** | Cumul des points obtenus sur les quiz |
+| **Score moyen** | Moyenne des scores sur tous les quiz passés |
+
+---
+
+### Mes formations en cours
+
+Un **carrousel horizontal** liste les modules que l'agent a commencés mais pas encore terminés. Chaque carte affiche :
+
+- Le titre du module
+- Une barre de progression (pourcentage)
+- Un bouton **Continuer** pour reprendre directement là où il s'est arrêté
+
+```
+┌─────────────────────────────────────┐
+│ Conformité et Réglementation...     │
+│ ████████████░░░░░░  45%             │
+│         [ Continuer ]               │
+└─────────────────────────────────────┘
+```
+
+<Note>
+Si l'agent n'a aucun module en cours, un message "Vous n'avez aucun module en cours" s'affiche avec un bouton **Découvrir les modules** qui redirige vers l'onglet Modules.
+</Note>
+
+---
+
+### Découvrez vos modules de formation
+
+Une liste de **modules recommandés** basés sur le département de l'agent. Chaque carte module affiche :
+
+- Le **titre** et la **description** du module
+- La **date de publication** relative (ex: "Publié il y a 1 jour")
+- Des **tags** de catégorie (ex: Digital, Outils)
+- La **durée estimée** du module
+- Un badge **Nouveau** si le module a été récemment publié
+- Un bouton de **téléchargement** pour accès hors-ligne
+- Une **barre de progression** si le module a été commencé
+
+Appuyer sur **Tout voir** (en haut à droite) redirige vers l'onglet Modules pour accéder à l'ensemble du catalogue.
+
+---
+
+## Chargement et états
+
+### Skeleton loading
+
+Pendant le chargement des données, des **squelettes animés** remplacent chaque composant (en-tête, carte stats, carrousel, cards modules). Cela évite un écran blanc et indique à l'agent que le contenu arrive.
+
+### Pull to refresh
+
+Faire glisser l'écran vers le bas déclenche un **rechargement manuel** des données.
+
+<Warning>
+Le pull to refresh ne fonctionne pas en mode hors-ligne. Un message "Impossible de rafraîchir sans connexion" s'affiche si l'agent tente un refresh sans internet.
+</Warning>
+
+### Timeout de sécurité
+
+Si le chargement dépasse **15 secondes** (ex: connexion très lente), l'écran sort automatiquement du mode loading pour ne pas bloquer l'agent indéfiniment.
+
+---
+
+## Comportement hors-ligne
+
+En l'absence de connexion internet, les données de l'accueil ne sont **pas disponibles** — elles ne sont pas mises en cache localement. Un message d'erreur s'affiche et les modules téléchargés restent accessibles depuis l'onglet **Modules**.

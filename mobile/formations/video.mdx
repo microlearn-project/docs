@@ -1,0 +1,62 @@
+---
+title: Vidéos
+description: Lecture des vidéos de cours dans l'application mobile UTB Learn
+---
+
+# Vidéos
+
+Les vidéos de cours sont intégrées directement dans le contenu HTML d'un cours. Elles s'affichent sous forme de lecteur natif inline, avec contrôles et support plein écran.
+
+---
+
+## Intégration
+
+Les vidéos sont **embarquées dans le HTML** du cours via des balises `<video>`, insérées depuis l'éditeur TipTap du dashboard admin (upload vers Supabase Storage). Elles s'affichent au fil du contenu, entre les paragraphes.
+
+---
+
+## Lecteur vidéo
+
+L'application utilise **`expo-video`** pour la lecture. Le lecteur s'affiche en format **16:9** avec :
+
+- Contrôles natifs (play/pause, barre de progression, volume)
+- Bouton **plein écran** — le video s'affiche en mode maximisé
+- Coins arrondis, fond noir
+- Lecture non bouclée par défaut
+
+```
+┌─────────────────────────────┐
+│                             │
+│         ▶  (vidéo)          │  ← 16:9
+│                             │
+│  ──────────────  ⛶  🔊     │  ← Contrôles natifs
+└─────────────────────────────┘
+```
+
+---
+
+## Sources vidéo
+
+Les vidéos sont hébergées dans le bucket `cours-videos` de **Supabase Storage** et servies via URL publique ou signée.
+
+<Note>
+  En **développement local**, les URLs `localhost:54321`
+  dans le HTML sont automatiquement remplacées par l'IP LAN
+  de la machine de dev (`EXPO_PUBLIC_LOCAL_IP`) pour être
+  accessibles depuis un device physique Android sur le même
+  réseau.
+</Note>
+
+---
+
+## Mode hors-ligne
+
+Les vidéos intégrées dans le HTML sont **téléchargées automatiquement** lors du téléchargement hors-ligne d'un module. Ainsi, le contenu texte, les documents annexes, la structure du cours et les vidéos sont tous accessibles sans connexion Internet.
+
+## Dépannage
+
+| Problème                     | Cause possible                  | Solution                                              |
+| ---------------------------- | ------------------------------- | ----------------------------------------------------- |
+| Vidéo ne se charge pas       | Connexion faible ou URL expirée | Vérifier la connexion, pull-to-refresh                |
+| Vidéo invisible en dev local | IP LAN incorrecte               | Vérifier `EXPO_PUBLIC_LOCAL_IP` dans `.env`           |
+| Lecteur noir sans lecture    | Codec non supporté              | Vérifier le format de la vidéo (MP4/H.264 recommandé) |

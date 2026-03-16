@@ -1,0 +1,93 @@
+---
+title: Storage
+description: Buckets Supabase Storage utilisés par UTB Learn
+---
+
+# Supabase Storage
+
+UTB Learn utilise **2 buckets** Supabase Storage pour stocker les fichiers médias et documents.
+
+---
+
+## Buckets
+
+### `cours-videos`
+
+Stocke les vidéos uploadées depuis l'éditeur TipTap des cours.
+
+| Propriété                 | Valeur                                    |
+| ------------------------- | ----------------------------------------- |
+| **Accès**                 | Public                                    |
+| **Formats acceptés**      | MP4 (`video/mp4`), WebM (`video/webm`)    |
+| **Taille maximale**       | 50 Mo par fichier                         |
+| **Structure des chemins** | `{moduleId}/{coursId}/{nom_vidéo}`        |
+| **Chemin temp**           | `{moduleId}/temp-{timestamp}/{nom_vidéo}` |
+
+Les vidéos sont uploadées **directement depuis le navigateur** via une Signed URL générée par `/api/cours/video-signed-url`, contournant la limite de 4.5 Mo de Vercel.
+
+### `documents`
+
+Stocke les fichiers annexes uploadés au niveau des modules.
+
+| Propriété                 | Valeur                                              |
+| ------------------------- | --------------------------------------------------- |
+| **Accès**                 | Public                                              |
+| **Formats acceptés**      | Tous types (PDF, images, etc.)                      |
+| **Structure des chemins** | `modules/{id_module}/{nom_nettoyé}_{timestamp}.ext` |
+
+Les noms de fichiers sont nettoyés avant upload (suppression accents, espaces → underscores, caractères spéciaux supprimés, timestamp unique).
+
+---
+
+## Nettoyage des vidéos orphelines
+
+Une **Edge Function** Supabase (`clean-orphan-videos`) est exécutée chaque nuit via **pg_cron** pour supprimer les vidéos orphelines du bucket `cours-videos`.
+
+```
+Déclenchement : pg_cron (nightly)
+        │
+        ▼
+Edge Function : clean-orphan-videos
+        │
+        ├── 1. Lister tous les fichiers dans cours-videos/
+        ├── 2. Récupérer tous les video_path en BDD (via regex sur cours.description)
+        ├── 3. Comparer → fichiers sans entrée BDD = orphelins
+        └── 4. Supprimer les fichiers orphelins
+```
+
+**Cas de création de vidéos orphelines :**
+
+- Upload d'une vidéo dans l'éditeur + fermeture de l'onglet sans sauvegarder
+- Erreur lors de la création/modification d'un cours après upload
+- Suppression d'un cours contenant une vidéo
+
+<Note>
+  Les vidéos dans des chemins `temp-*` sont particulièrement
+  susceptibles d'être orphelines — elles sont créées quand
+  le `coursId` n'est pas encore connu au moment de l'upload
+  (nouveau cours non encore sauvegardé).
+</Note>
+
+---
+
+## Limites du plan Free
+
+<Warning>
+  Supabase Free Plan limite le Storage à **1 Go** au total
+  (tous buckets confondus). Surveiller l'usage depuis le
+  dashboard Supabase → Storage → Usage. Si la limite
+  approche, envisager une mise à niveau vers le plan Pro ou
+  une politique d'archivage des vieilles vidéos.
+</Warning>
+
+---
+
+## Accès aux fichiers
+
+Les fichiers publics sont accessibles via leur URL permanente :
+
+```
+https://{project-ref}.supabase.co/storage/v1/object/public/{bucket}/{path}
+```
+
+Cette URL est celle stockée dans `cours.documents` (tableau d'URLs) et dans les balises `<video src="...">` du HTML TipTap.

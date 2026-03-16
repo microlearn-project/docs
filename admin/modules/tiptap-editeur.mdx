@@ -1,0 +1,102 @@
+---
+title: Éditeur TipTap
+description: Utiliser l'éditeur de contenu TipTap dans le dashboard admin UTB Learn
+---
+
+# Éditeur TipTap
+
+L'éditeur **TipTap 3** (basé sur ProseMirror) est utilisé pour rédiger la description des modules et le contenu des cours. Il produit du **HTML riche** directement interprétable par l'application mobile via `react-native-render-html`.
+
+---
+
+## Où l'éditeur est utilisé
+
+| Contexte                  | Composant             | Champ alimenté       |
+| ------------------------- | --------------------- | -------------------- |
+| Création module (étape 2) | `ModulesCreateEditor` | `module.description` |
+| Édition module (étape 1)  | `ModulesCreateEditor` | `module.description` |
+| Création cours            | `ModulesCreateEditor` | `cours.description`  |
+| Édition cours             | `ModulesCreateEditor` | `cours.description`  |
+
+---
+
+## Fonctionnalités de formatage
+
+L'éditeur supporte les éléments suivants :
+
+| Élément                               | Description                          |
+| ------------------------------------- | ------------------------------------ |
+| Titres H1–H4                          | Hiérarchie de titres                 |
+| Paragraphes                           | Texte courant                        |
+| **Gras**, _italique_, <u>souligné</u> | Formatage inline                     |
+| Listes à puces / numérotées           | `ul` / `ol`                          |
+| Liens                                 | Hyperliens                           |
+| Images                                | Upload inline (voir ci-dessous)      |
+| **Vidéos**                            | Upload via nœud custom `VideoUpload` |
+| Alignement                            | Gauche, centre, droite               |
+
+---
+
+## Upload d'images inline
+
+Les images sont uploadées via `ImageUpload.ts` vers Supabase Storage (`/api/cours/`) et insérées directement dans le contenu HTML sous forme de balise `<img src="...">`.
+
+---
+
+## Upload de vidéos inline
+
+Les vidéos utilisent un **nœud TipTap custom** (`VideoUpload`) avec un composant Vue dédié (`VideoUploadNode.vue`). Voir [Upload de vidéos](/admin/modules/upload-video) pour le détail complet.
+
+---
+
+## Sortie HTML
+
+Le contenu produit par l'éditeur est du HTML standard stocké en base de données (`module.description`, `cours.description`). Exemple :
+
+```html
+<h2>Contenu du cours</h2>
+<p>La conformité bancaire est un ensemble de règles...</p>
+<ul>
+  <li>Obligation légale</li>
+  <li>Bonne pratique</li>
+</ul>
+<video
+  src="https://...supabase.co/storage/v1/object/public/cours-videos/..."
+  controls
+  data-module-id="..."
+  data-cours-id="..."
+></video>
+```
+
+<Warning>
+  TipTap 3 requiert une configuration `optimizeDeps` dans
+  `nuxt.config.ts` pour éviter un crash lié à
+  l'instanciation multiple de ProseMirror en développement.
+  Les `pnpm.overrides` du `package.json` forcent la
+  cohérence de toutes les dépendances `@tiptap/*` sur la
+  version `3.13.0`.
+</Warning>
+
+---
+
+## Remontage propre de l'éditeur
+
+Dans `modules/create.vue`, une clé dynamique `editorKey` est incrémentée à chaque navigation entre les étapes et à chaque retour arrière. Cela force Vue à remonter le composant éditeur depuis zéro, évitant les conflits de state ProseMirror entre les étapes.
+
+```ts
+// Incrémenter à chaque navigation
+editorKey.value++;
+currentStep.value = 2;
+```
+
+<Note>
+  Sans cette clé, naviguer en arrière puis de nouveau vers
+  l'étape 2 peut produire une erreur "duplicate ProseMirror
+  instance" qui bloque l'éditeur.
+</Note>
+
+---
+
+## Rendu sur mobile
+
+Le HTML produit par TipTap est rendu côté mobile via `react-native-render-html` avec des `tagsStyles` personnalisés. Les vidéos embarquées sont interceptées par un `VideoRenderer` custom qui les remplace par un lecteur `expo-video` natif.

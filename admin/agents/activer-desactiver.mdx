@@ -1,0 +1,104 @@
+---
+title: Activer / Désactiver / Supprimer
+description: Gérer le statut et la suppression des agents dans le dashboard admin UTB Learn
+---
+
+# Activer / Désactiver / Supprimer
+
+Ces trois actions sont accessibles depuis le menu `⋮` de chaque ligne du tableau, ou via la sélection multiple pour la suppression.
+
+---
+
+## Tableau des agents
+
+Le tableau affiche les colonnes suivantes :
+
+| Colonne                | Description                                     |
+| ---------------------- | ----------------------------------------------- |
+| **Checkbox**           | Sélection unitaire ou globale                   |
+| **Code**               | `code_agent` en `font-mono`                     |
+| **Agent**              | Avatar initiales + nom complet + email, triable |
+| **Statut**             | Badge vert "Actif" ou rouge "Inactif"           |
+| **Dernière connexion** | Date/heure ou "Jamais connecté"                 |
+| **Créé le**            | Date de création                                |
+| **Actions**            | Menu `⋮`                                        |
+
+Filtres disponibles dans la barre d'outils :
+
+- **Recherche globale** — filtre sur tous les champs
+- **Filtre statut** — Tous / Actif / Inactif
+- **Colonnes visibles** — toggle de visibilité par colonne
+
+Pagination : 10 lignes par page.
+
+---
+
+## Activer un agent
+
+**Depuis le menu `⋮` → "Activer"** (visible si l'agent est inactif)
+
+```
+PATCH /api/agent/:id/activate
+→ agent.actif = true
+```
+
+La mise à jour est appliquée **localement** dans le tableau sans rechargement réseau, puis confirmée par un toast "Agent activé".
+
+---
+
+## Désactiver un agent
+
+**Depuis le menu `⋮` → "Désactiver"** (visible si l'agent est actif)
+
+```
+PATCH /api/agent/:id/deactivate
+→ agent.actif = false
+```
+
+Même comportement que l'activation — mise à jour locale immédiate.
+
+<Note>
+  Un agent désactivé (`actif = false`) ne peut plus se
+  connecter au dashboard ni à l'application mobile. Ses
+  données sont conservées intégralement.
+</Note>
+
+---
+
+## Supprimer un ou plusieurs agents
+
+### Suppression depuis le menu `⋮` (agent unique)
+
+Cliquer sur **"Supprimer"** dans le menu `⋮` d'une ligne déclenche directement le soft-delete sans modale de confirmation.
+
+### Suppression multiple (sélection)
+
+Sélectionner plusieurs lignes fait apparaître le bouton **"Supprimer [N]"** avec un badge indiquant le nombre d'agents sélectionnés. Une **modale de confirmation** s'affiche listant tous les agents concernés (avatar, nom, email, code agent) avant suppression.
+
+---
+
+## Logique de suppression (soft-delete vs hard-delete)
+
+L'endpoint `PATCH /api/agent/soft-delete` vérifie **5 tables de dépendances** avant de décider du type de suppression :
+
+| Table vérifiée  | Signification                      |
+| --------------- | ---------------------------------- |
+| `user_role`     | L'agent a un rôle attribué         |
+| `module`        | L'agent est auteur d'un module     |
+| `suivi_module`  | L'agent a suivi au moins un module |
+| `reponse_agent` | L'agent a répondu à des quiz       |
+| `resultat_quiz` | L'agent a des résultats de quiz    |
+
+| Situation                       | Action          | Effet                                                                                  |
+| ------------------------------- | --------------- | -------------------------------------------------------------------------------------- |
+| Au moins une dépendance trouvée | **Soft-delete** | `deleted_at = now()` + `actif = false` — données conservées                            |
+| Aucune dépendance               | **Hard-delete** | Suppression physique de la table `agent` **ET** suppression du user dans Supabase Auth |
+
+Les deux cas sont loggés dans `activity_log` avec `meta.type = "soft_delete"` ou `"hard_delete"`.
+
+<Warning>
+  Le hard-delete est **définitif** — l'agent est supprimé de
+  la BDD et de Supabase Auth. Il n'est pas récupérable.
+  Cette situation ne se produit que pour les agents qui
+  n'ont jamais eu d'activité sur la plateforme.
+</Warning>

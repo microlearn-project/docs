@@ -1,0 +1,91 @@
+---
+title: Gestion des cours
+description: Ajouter, modifier et organiser les cours d'un module dans le dashboard admin UTB Learn
+---
+
+# Gestion des cours
+
+Les cours sont gérés depuis l'**étape 2** de l'éditeur de module (`/modules/edit/:id`). Chaque module contient une liste ordonnée de cours, réorganisable par glisser-déposer.
+
+---
+
+## Liste des cours
+
+Chaque cours est affiché dans une carte avec :
+
+| Élément            | Description                                                    |
+| ------------------ | -------------------------------------------------------------- |
+| **Handle ⠿**       | Zone de drag pour réordonner                                   |
+| **Numéro d'ordre** | Badge circulaire (position dans le module)                     |
+| **Titre**          | Nom du cours                                                   |
+| **Durée**          | Estimée automatiquement depuis le contenu                      |
+| **Badge Vidéo**    | Visible si le contenu HTML contient une URL `cours-videos`     |
+| **Documents**      | Nombre de documents associés (ou "Aucun document")             |
+| **Actions**        | 📎 Documents / ✏️ Modifier / 🗑️ Supprimer (visibles au survol) |
+
+---
+
+## Réorganisation par drag & drop
+
+Glisser une carte sur une autre réordonne la liste localement. Une **bannière d'avertissement** apparaît en sticky en haut de la liste dès qu'un changement d'ordre est détecté :
+
+```
+⚠️  Ordre modifié
+    L'ordre des cours a été modifié.
+    Enregistrez pour appliquer les changements.
+
+    [Annuler]   [Enregistrer l'ordre]
+```
+
+| Action                  | Comportement                                                     |
+| ----------------------- | ---------------------------------------------------------------- |
+| **Annuler**             | Restaure l'ordre original depuis les données serveur             |
+| **Enregistrer l'ordre** | `PATCH /api/cours/reorder` avec le tableau `[{id_cours, ordre}]` |
+
+<Warning>
+  Le bouton **"Continuer vers les Quiz"** est désactivé tant
+  que l'ordre a été modifié mais pas sauvegardé. Il faut
+  enregistrer l'ordre avant de pouvoir passer à l'étape
+  suivante.
+</Warning>
+
+---
+
+## Ajouter un cours
+
+Le bouton **"Ajouter un cours"** ouvre la modale `ModulesCoursAddModal` :
+
+| Champ       | Validation                   |
+| ----------- | ---------------------------- |
+| **Titre**   | Min. 3 caractères            |
+| **Contenu** | Éditeur TipTap — obligatoire |
+
+`POST /api/cours/create` avec `titre`, `description`, `id_module`. La durée de lecture est **calculée automatiquement** côté serveur depuis le contenu.
+
+<Note>
+  Si une vidéo est uploadée pendant la rédaction et que la
+  modale est fermée sans sauvegarder, la vidéo dans Supabase
+  Storage devient orpheline. Elle sera nettoyée
+  automatiquement par la Edge Function nocturne
+  `clean-orphan-videos`.
+</Note>
+
+---
+
+## Modifier un cours
+
+La modale `ModulesCoursEditModal` s'ouvre pré-remplie avec le titre et le contenu actuels du cours. L'éditeur TipTap reçoit le `coursId` pour associer correctement les vidéos uploadées.
+
+`PATCH /api/cours/update` avec `id`, `titre`, `description`.
+
+---
+
+## Supprimer un cours
+
+La modale `ModulesCoursDeleteModal` demande confirmation avant suppression. La suppression est un **soft-delete** (`deleted_at = now()`).
+
+---
+
+## Associer des documents à un cours
+
+L'icône 📎 de chaque cours ouvre la modale `ModulesCoursDocumentsModal`. Voir [Documents](/admin/modules/documents) pour le détail.

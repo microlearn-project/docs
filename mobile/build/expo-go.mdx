@@ -1,0 +1,93 @@
+---
+title: Expo Go (tests rapides)
+description: Tester l'application UTB Learn en développement avec Expo Go
+---
+
+# Expo Go
+
+**Expo Go** est l'application de test rapide d'Expo. Elle permet de lancer UTB Learn sur un device Android physique sans générer d'APK, directement depuis le serveur de développement local.
+
+---
+
+## Installation
+
+Installer **Expo Go** depuis le Play Store sur le device Android de test :
+
+- Play Store : rechercher **"Expo Go"**
+- Ou via le lien direct : [expo.dev/go](https://expo.dev/go)
+
+---
+
+## Lancer le serveur de développement
+
+```bash
+# Depuis le dossier mobile/
+npx expo start
+```
+
+Le terminal affiche un **QR code** et l'adresse du serveur local (ex: `exp://192.168.1.135:8081`).
+
+```bash
+# Lancer directement sur un émulateur Android connecté
+npx expo start --android
+
+# Lancer en mode tunnel (si même réseau Wi-Fi impossible)
+npx expo start --tunnel
+```
+
+---
+
+## Se connecter depuis le device
+
+1. Ouvrir **Expo Go** sur le téléphone Android
+2. Scanner le QR code affiché dans le terminal
+3. L'application se charge et se lance automatiquement
+
+<Note>
+Le téléphone et la machine de développement doivent être sur le **même réseau Wi-Fi**. Si ce n'est pas possible, utilise `--tunnel` qui passe par les serveurs d'Expo (plus lent).
+</Note>
+
+---
+
+## Configuration réseau local
+
+Si l'app utilise **Supabase en local** (`supabase start`), le device ne peut pas résoudre `localhost`. Il faut utiliser l'IP LAN de la machine dans `.env` :
+
+```bash
+# .env (mobile)
+EXPO_PUBLIC_LOCAL_IP=192.168.1.135   # IP LAN de ta machine
+EXPO_PUBLIC_SUPABASE_URL=http://${EXPO_PUBLIC_LOCAL_IP}:54321
+```
+
+Le code de l'app remplace automatiquement les URLs `localhost` par cette IP en mode `__DEV__`.
+
+---
+
+## Limites d'Expo Go
+
+Expo Go ne supporte **pas** les modules natifs custom. Si une feature nécessite du code natif non inclus dans le SDK Expo standard, le build plantera ou la feature sera indisponible.
+
+| Feature | Expo Go | Development Build |
+|---------|---------|------------------|
+| Supabase Auth | **OUI** | **OUI** |
+| expo-video | **OUI** | **OUI** |
+| expo-file-system | **OUI** | **OUI** |
+| expo-intent-launcher | **OUI** | **OUI** |
+| Modules natifs custom | **NON** | **OUI** |
+| expo-dev-client | **NON** | **OUI** |
+
+<Warning>
+Si `expo-dev-client` est présent dans les dépendances, Expo Go peut refuser de lancer l'app. Dans ce cas, utilise un **development build** (`eas build --profile development`) ou retire `expo-dev-client` des dépendances pour les tests Expo Go.
+</Warning>
+
+---
+
+## Quand utiliser Expo Go vs EAS Build
+
+| Situation | Outil recommandé |
+|-----------|-----------------|
+| Tests UI rapides, itérations fréquentes | **Expo Go** |
+| Test sur device sans PC branché | **Expo Go** (QR code) |
+| Features nécessitant modules natifs | **EAS Build `development`** |
+| Distribution aux agents UTB | **EAS Build `preview`** |
+| Validation avant release | **EAS Build `release`** |

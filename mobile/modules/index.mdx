@@ -1,0 +1,113 @@
+---
+title: Tous les modules
+description: Parcourir le catalogue de modules de formation dans l'application mobile UTB Learn
+---
+
+# Tous les modules
+
+L'écran **Tous les modules** est le catalogue complet des formations disponibles pour l'agent. Il est accessible depuis l'onglet **Modules** de la barre de navigation.
+
+---
+
+## Aperçu
+
+![Liste des modules UTB Learn](/images/mobile/modules-screen.jpg)
+
+---
+
+## Barre de recherche
+
+En haut de l'écran, une barre de recherche permet de filtrer les modules en temps réel. La recherche porte sur :
+
+- Le **titre** du module
+- Les **tags** (catégories associées)
+- Le mot-clé **"nouveau"** pour trouver les modules récents
+
+Un bouton ✕ apparaît dans la barre dès qu'un texte est saisi — il efface la recherche en un tap.
+
+---
+
+## Bouton Filtrer
+
+À droite de la barre de recherche, le bouton filtre ouvre le **panneau de filtrage** (voir [Recherche & Filtres](/mobile/modules/recherche-filtres)).
+
+Quand des filtres sont actifs, un **badge numérique** apparaît sur le bouton indiquant le nombre de filtres appliqués, et le bouton prend une teinte bleue.
+
+```
+🔍 Rechercher une formation     [≡]
+                                 ↑
+                          Badge si filtres actifs
+```
+
+---
+
+## Carte module
+
+Chaque module est affiché sous forme de carte contenant :
+
+| Élément | Description |
+|---------|-------------|
+| **Titre** | Nom du module |
+| **Date de publication** | Relative (ex: "Publié il y a 1 jour") |
+| **Description** | Apperçu de la description du module |
+| **Tags** | Catégories du module (ex: Digital, Conformité) |
+| **Durée** | Durée estimée (ex: 1h 30min) |
+| **Badge Nouveau** | Affiché si le module est récent |
+| **Barre de progression** | Visible si le module est en cours (ex: 45%) |
+| **Icône téléchargement** | Permet de télécharger le module hors-ligne |
+
+Appuyer sur une carte ouvre la [page de détails du module](/mobile/modules/details).
+
+---
+
+## Chargement & pagination
+
+- Au premier chargement, des **squelettes animés** s'affichent à la place des cartes
+- Les modules se chargent par **pages de 10** (pagination infinie)
+- En faisant défiler jusqu'en bas, les **10 modules suivants** se chargent automatiquement
+- Un indicateur de chargement (`ActivityIndicator`) s'affiche en bas de liste pendant ce chargement
+
+<Note>
+Un **timeout de sécurité de 30 secondes** est en place. Si le chargement dépasse ce délai, l'écran sort du mode loading pour ne pas bloquer l'agent.
+</Note>
+
+---
+
+## Indicateur de filtre département
+
+Quand un filtre par département est actif, une bannière bleue s'affiche sous la barre de recherche :
+
+```
+🏢 Modules de : Conformité, Digital     ✕
+```
+
+Appuyer sur ✕ supprime le filtre département et recharge les modules du département de l'agent.
+
+---
+
+## État vide
+
+Si aucun module ne correspond aux critères :
+
+```
+        🔍
+
+   Aucun module trouvé
+
+Essayez de modifier vos critères
+      de recherche
+
+   [ Réinitialiser les filtres ]
+```
+
+Si aucun module n'est disponible du tout pour le département :
+
+```
+Aucun module disponible pour votre département
+```
+
+---
+
+## Comportement hors-ligne
+
+Le chargement de la liste nécessite une connexion internet. En mode hors-ligne, un message d'erreur s'affiche. Les modules déjà téléchargés restent accessibles via le filtre **"Téléchargés"** dans le panneau de filtrage.

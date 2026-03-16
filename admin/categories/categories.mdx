@@ -1,0 +1,64 @@
+---
+title: Gestion des catégories
+description: Gérer les catégories (tags) dans le dashboard admin UTB Learn
+---
+
+# Gestion des catégories
+
+Les catégories (table `tag`) sont des étiquettes associées aux modules pour faciliter la recherche et le filtrage côté mobile. Elles sont gérées depuis `/categories`.
+
+---
+
+## Tableau
+
+| Colonne                   | Description                                             |
+| ------------------------- | ------------------------------------------------------- |
+| **Désignation**           | Nom de la catégorie (ex: Conformité, Digital, Sécurité) |
+| **Dernière modification** | Date/heure de la dernière mise à jour                   |
+| **Créé le**               | Date/heure de création                                  |
+
+Recherche en temps réel sur la colonne **Désignation**. Pagination : 10 lignes par page.
+
+---
+
+## Ajouter une catégorie
+
+Le bouton **"Ajouter"** en haut à droite ouvre `CategoriesAddModal`. L'événement `@addcategory` déclenche un `refresh()` du tableau après création.
+
+`POST /api/tag/addtag`
+
+---
+
+## Modifier une catégorie
+
+Sélectionner **exactement 1 ligne** fait apparaître le bouton **"Modifier"** → ouvre `CategoriesUpdateModal`.
+
+`PATCH /api/tag/updatetag`
+
+---
+
+## Supprimer une catégorie
+
+**Depuis le menu `⋮`** (suppression unitaire) ou **sélection multiple** → bouton "Supprimer [N]" → `CategoriesDeleteModal`.
+
+`PATCH /api/tag/soft-delete`
+
+La suppression est appliquée **localement** dans le tableau sans rechargement réseau (filtrage de l'array `categories.value`).
+
+<Warning>
+  Supprimer une catégorie ne la retire pas automatiquement
+  des modules auxquels elle est associée. Vérifiez les
+  associations avant suppression.
+</Warning>
+
+---
+
+## Utilisation
+
+Les catégories sont utilisées :
+
+- Dans l'éditeur de module (étape 1 → "Catégories" → `ModulesCategoriesModal`)
+- Côté mobile pour le filtrage des modules dans le panneau de filtrage (section "Catégories")
+- Sur les cartes modules (badge de tags)
+
+Les catégories disponibles sont chargées depuis `/api/tag` → `getAllTags()` côté mobile.

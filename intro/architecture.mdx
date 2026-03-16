@@ -1,0 +1,167 @@
+---
+title: Architecture globale
+description: Schémas d'architecture de la plateforme UTB Learn
+---
+
+# Architecture globale
+
+Cette page décrit comment les différentes parties d'UTB Learn s'articulent entre elles : le flux de données, le déploiement, les tables principales de la base de données et les traitements automatisés.
+
+---
+
+## 1. Flux applicatif
+
+Ce schéma montre comment l'application mobile et le dashboard admin interagissent avec Supabase. 
+<Tabs>
+  <Tab title="Schéma ASCII">
+```
+┌─────────────────────┐         ┌─────────────────────┐
+│   Application Mobile │         │   Dashboard Admin    │
+│   (React Native/Expo)│         │   (Nuxt 4 / Vercel)  │
+└────────┬────────────┘         └──────────┬──────────┘
+         │                                  │
+         │  Supabase JS Client              │  Supabase JS Client
+         │  (Auth + DB + Storage)           │  (Auth + DB + Storage)
+         ▼                                  ▼
+┌─────────────────────────────────────────────────────┐
+│                     SUPABASE                        │
+│                                                     │
+│  ┌────────────┐  ┌──────────────┐  ┌─────────────┐ │
+│  │ PostgreSQL │  │    Storage   │  │    Auth     │ │
+│  │   (BDD)    │  │ cours-videos │  │ (JWT/RLS)   │ │
+│  └────────────┘  └──────────────┘  └─────────────┘ │
+│                                                     │
+│  ┌──────────────────────────────────────────────┐  │
+│  │            Edge Functions                    │  │
+│  │  clean-orphan-videos (déclenchée par cron)   │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+  </Tab>
+  <Tab title="Illustration graphique">
+![Quiz — Question 1](/images/infra/architecture.jpg)
+  </Tab>
+</Tabs>
+
+**Lecture :**
+- Les deux interfaces consomment Supabase directement via le client JS (pas d'API intermédiaire).
+- L'authentification est gérée par Supabase Auth avec JWT. Les RLS (Row Level Security) filtrent automatiquement les données selon le profil connecté.
+- Les vidéos et documents sont stockés dans le bucket `cours-videos` de Supabase Storage, accessible via URL signée.
+
+---
+
+## 2. Schéma de déploiement
+
+<Tabs>
+  <Tab title="Schéma ASCII">
+```
+GitHub (repo principal)
+        │
+        ├──▶ Vercel (auto-deploy)
+        │         └── Dashboard Admin (Nuxt 4)
+        │              URL : dashboard.utb.tg (ou vercel.app)
+        │
+        └──▶ EAS Build (manuel)
+                  └── APK Android
+                       └── Distribution interne (téléchargement direct)
+
+Supabase (cloud, plan Free)
+  ├── Base de données PostgreSQL
+  ├── Storage (cours-videos)
+  ├── Auth (JWT)
+  └── Edge Functions (Deno runtime)
+        └── clean-orphan-videos
+              └── Planifiée par pg_cron (nightly)
+```
+  </Tab>
+  <Tab title="Illustration graphique">
+![Quiz — Question 1](/images/infra/cron-work.jpg)
+  </Tab>
+</Tabs>
+
+<Note>
+Le dashboard est déployé automatiquement sur Vercel à chaque push sur la branche principale. L'APK mobile est généré manuellement via `eas build --profile preview` et distribué en interne.
+</Note>
+
+<Warning>
+Si ton ISP bloque les IP Vercel, utilise **Cloudflare WARP** comme solution temporaire. La migration vers **Cloudflare Pages** est recommandée comme alternative long terme à Vercel.
+</Warning>
+
+---
+
+## 3. Schéma BDD — Tables principales
+
+Voici les entités clés de la base de données PostgreSQL Supabase.
+
+```
+agents                    modules
+──────────────            ──────────────────
+id_agent (PK)             id_module (PK)
+code_agent                titre
+nom                       description
+prenom                    id_categorie (FK → categories)
+email                     id_direction (FK → directions)
+id_role (FK → roles)      is_published
+id_departement (FK)       deleted_at (soft-delete)
+id_direction (FK)         created_at
+is_active
+deleted_at (soft-delete)
+
+cours                     quiz
+──────────────────        ──────────────────
+id_cours (PK)             id_quiz (PK)
+titre                     id_module (FK → modules)
+contenu (richtext)        titre
+video_path (Storage)      questions (JSONB)
+id_module (FK)            created_at
+ordre
+deleted_at (soft-delete)
+
+documents                 activity_log
+──────────────────        ──────────────────
+id_document (PK)          id (PK)
+nom                       id_agent (FK)
+file_path (Storage)       action
+id_module (FK)            details (JSONB)
+                          created_at
+
+categories    directions    departements    roles
+──────────    ──────────    ────────────    ─────
+id (PK)       id (PK)       id (PK)         id (PK)
+nom           nom           nom             nom
+              id_categorie  id_direction
+```
+
+<Note>
+Les tables `agents`, `modules` et `cours` utilisent un **soft-delete** via la colonne `deleted_at`. Un enregistrement supprimé n'est pas physiquement effacé — il est marqué avec un timestamp. Les quiz sont supprimés définitivement (hard-delete) car ils n'ont pas de dépendances critiques.
+</Note>
+
+---
+
+## 4. Edge Functions & pg_cron
+
+UTBLearn utilise une Edge Function Supabase pour le nettoyage automatique des vidéos orphelines.
+
+```
+Chaque nuit (pg_cron)
+        │
+        ▼
+Edge Function : clean-orphan-videos
+        │
+        ├── 1. Récupère tous les fichiers dans Storage (cours-videos/)
+        │
+        ├── 2. Récupère tous les video_path enregistrés en BDD (table cours)
+        │
+        ├── 3. Compare les deux listes
+        │         → Fichiers Storage sans entrée BDD = orphelins
+        │
+        └── 4. Supprime les fichiers orphelins du Storage
+```
+
+**Pourquoi cette approche ?**
+
+Lors d'un upload de vidéo, le fichier est envoyé dans Supabase Storage avant d'être associé à un cours. Si l'utilisateur annule ou si une erreur survient, le fichier reste dans le Storage sans entrée BDD — c'est un fichier orphelin. La Edge Function nettoie ces fichiers chaque nuit pour éviter une consommation inutile du quota Storage.
+
+<Tip>
+Le nettoyage est déclenché par **pg_cron** (extension PostgreSQL native dans Supabase) plutôt que par un cron externe, ce qui évite toute dépendance à un serveur tiers.
+</Tip>

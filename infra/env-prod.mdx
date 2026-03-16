@@ -1,0 +1,61 @@
+---
+title: Variables d'environnement (prod)
+description: Variables d'environnement de production UTB Learn
+---
+
+# Variables d'environnement — Production
+
+Récapitulatif de toutes les variables à configurer pour les deux interfaces en production.
+
+---
+
+## Dashboard Admin — Vercel
+
+À configurer dans **Vercel → Project → Settings → Environment Variables** :
+
+```bash
+NUXT_SUPABASE_URL=https://<project-ref>.supabase.co
+NUXT_SUPABASE_ANON_KEY=<anon-public-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
+
+---
+
+## Application Mobile — EAS Build
+
+À configurer dans **Expo → Project → Secrets** ou dans le fichier `.env` local avant le build :
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
+EXPO_PUBLIC_LOCAL_IP=<ip-lan>   # Dev local uniquement — ne pas inclure en production
+```
+
+<Warning>
+  `EXPO_PUBLIC_LOCAL_IP` ne doit **pas** être définie en
+  production. Elle sert uniquement au développement local
+  pour résoudre les URLs `localhost` sur un device physique
+  Android.
+</Warning>
+
+---
+
+## Où trouver ces valeurs
+
+Sur [app.supabase.com](https://app.supabase.com) → ton projet → **Settings → API** :
+
+| Valeur cherchée                                            | Clé Supabase               |
+| ---------------------------------------------------------- | -------------------------- |
+| `NUXT_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_URL`           | **Project URL**            |
+| `NUXT_SUPABASE_ANON_KEY` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` | **anon / public**          |
+| `SUPABASE_SERVICE_ROLE_KEY`                                | **service_role** ⚠️ secret |
+
+---
+
+## Règles de sécurité
+
+| Règle                                               | Détail                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_SERVICE_ROLE_KEY` côté serveur uniquement | Ne jamais exposer dans le client mobile ni dans des variables `EXPO_PUBLIC_*` — donne accès total à la BDD sans RLS |
+| `NUXT_SUPABASE_*` vs `NUXT_PUBLIC_SUPABASE_*`       | UTBLearn utilise `NUXT_SUPABASE_*` (géré par `@nuxtjs/supabase`) — ne pas confondre avec `NUXT_PUBLIC_*`            |
+| `.env` non commité                                  | Vérifier que `.env` et `.env.local` sont dans `.gitignore` — seul `.env.example` doit être commité                  |

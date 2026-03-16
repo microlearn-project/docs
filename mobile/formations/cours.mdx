@@ -1,0 +1,100 @@
+---
+title: Cours
+description: Lire un cours dans l'application mobile UTB Learn
+---
+
+# Cours
+
+La page **Aperçu du cours** affiche le contenu complet d'un cours : texte riche, vidéos, images et documents annexes. C'est ici que l'agent suit sa formation.
+
+---
+
+## Aperçu
+
+![Aperçu du cours — contenu](/images/mobile/course-details.jpg)
+
+![Aperçu du cours — documents et quiz](/images/mobile/course-details-1.jpg)
+
+---
+
+## En-tête
+
+```
+←     Aperçu du cours
+```
+
+Appuyer sur `←` retourne à la **page de détails du module** (le paramètre `moduleId` est préservé pour assurer la navigation correcte).
+
+---
+
+## Informations du cours
+
+- **Titre** du cours en grand (ex: *Introduction à la conformité*)
+- **Badge durée** avec icône horloge (ex: `🕐 30 min`)
+- **Badge score précédent** : affiché si l'agent a déjà passé le quiz
+
+| Score | Affichage |
+|-------|-----------|
+| ≥ 70% | Badge vert — `✅ Score précédent : 85%` |
+| < 70% | Badge rouge — `❌ Score précédent : 45%` |
+
+---
+
+## Contenu riche (HTML)
+
+Le corps du cours est rendu depuis du **HTML généré par TipTap** (éditeur du dashboard admin). Il supporte :
+
+| Élément | Rendu |
+|---------|-------|
+| Paragraphes | Texte fluide |
+| Titres H1–H4 | Hiérarchie visuelle |
+| Listes ul/ol | Listes à puces et numérotées |
+| Images | Rendues pleine largeur, coins arrondis |
+| Vidéos | Lecteur natif intégré (voir [Vidéos](/mobile/formations/video)) |
+| Liens | Texte bleu souligné |
+
+<Note>
+Les vidéos et images embarquées dans le contenu HTML sont gérées par des renderers custom (`VideoRenderer`, `ImageRenderer`). En développement local, les URLs `localhost` sont automatiquement remplacées par l'IP LAN (`EXPO_PUBLIC_LOCAL_IP`) pour être accessibles depuis le device physique.
+</Note>
+
+---
+
+## Documents annexes
+
+Si le cours contient des fichiers joints, une section **"Documents annexes"** s'affiche sous le contenu avec une carte par document :
+
+| Élément | Description |
+|---------|-------------|
+| **Icône type** | Rouge (PDF), Bleu (image), Vert (autre) |
+| **Nom du fichier** | Ex: `Support de cours.pdf` |
+| **Taille** | Taille estimée du fichier |
+
+Appuyer sur un document l'ouvre avec l'application native du téléphone (`expo-intent-launcher`). Un spinner s'affiche pendant l'ouverture.
+
+<Warning>
+Si aucune application compatible n'est installée sur le device pour le type de fichier, l'ouverture échoue avec un message d'erreur.
+</Warning>
+
+---
+
+## Bouton Quiz
+
+Si le cours est associé à un quiz, un bouton fixe apparaît en bas de l'écran :
+
+| État du cours | Texte du bouton |
+|---------------|----------------|
+| Non terminé | **Passer le quiz** |
+| Terminé, score existant | **Repasser le quiz (85%)** |
+| Terminé, sans score | **Repasser le quiz** |
+
+Appuyer sur ce bouton redirige vers la [page du quiz](/mobile/quiz/repondre).
+
+<Warning>
+Le quiz nécessite une **connexion internet**. En mode hors-ligne, un message d'erreur s'affiche et la navigation vers le quiz est bloquée.
+</Warning>
+
+---
+
+## Mode hors-ligne
+
+Si le module est téléchargé, le cours se charge depuis le **stockage local**. Le contenu HTML, les documents téléchargés et la structure du cours sont disponibles. Les vidéos embarquées dans le HTML et le quiz restent inaccessibles hors-ligne.

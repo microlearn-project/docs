@@ -1,0 +1,81 @@
+---
+title: Créer un agent
+description: Ajouter un nouvel agent dans le dashboard admin UTB Learn
+---
+
+# Créer un agent
+
+Le bouton **"Nouvel Agent"** en haut à droite de la page Agents ouvre le formulaire de création.
+
+---
+
+## Formulaire de création
+
+| Champ           | Obligatoire | Remarque                                   |
+| --------------- | ----------- | ------------------------------------------ |
+| **Nom**         | **OUI**     | Converti automatiquement en MAJUSCULES     |
+| **Prénom**      | **OUI**     |                                            |
+| **Email**       | **OUI**     | Validation format email — doit être unique |
+| **Direction**   | **OUI**     | Sélection via modale de recherche          |
+| **Département** | **OUI**     | Sélection via modale de recherche          |
+
+### Sélection Direction / Département
+
+Les champs Direction et Département s'ouvrent chacun dans une **modale de recherche** avec tableau paginé (5 lignes par page) et barre de recherche. Cliquer sur "Sélectionner" dans la modale ferme celle-ci et pré-remplit le champ. Un bouton ✕ permet de réinitialiser la sélection.
+
+<Note>
+  La liste des directions provient de `/api/departement`
+  (table `direction`), et la liste des départements de
+  `/api/service` (table `departement`, filtrée sur `actif =
+  true` et `deleted_at IS NULL`).
+</Note>
+
+---
+
+## Processus de création (côté serveur)
+
+La création d'un agent passe par **2 étapes atomiques** (`POST /api/agent/create`) :
+
+```
+1. Création du user dans Supabase Auth
+   → email + mot de passe initial = code_agent généré
+   → email_confirm: true (pas de vérification email requise)
+
+2. Insertion dans la table agent
+   → Si l'étape 2 échoue → rollback : suppression du user Auth
+```
+
+Le **code agent** est généré automatiquement : 6 caractères base62 uniques, hashés avec `hashPassword()` pour le `password_hash`.
+
+---
+
+## Modale de succès
+
+Après création réussie, une modale affiche les informations de l'agent créé avec son **code agent** (mot de passe initial) en grand format `font-mono` :
+
+```
+✅  Jean DUPONT
+    jean.dupont@utb.tg
+
+    Code agent (mot de passe initial)
+    ┌─────────────────┐
+    │   A3F7K2        │  📋
+    └─────────────────┘
+
+⚠️  Communiquez ce code à l'agent de manière
+    sécurisée. Il l'utilisera pour sa première
+    connexion et pourra ensuite le modifier.
+```
+
+Le bouton 📋 copie le code dans le presse-papier. 
+
+---
+
+## Erreurs possibles
+
+| Erreur                           | Code | Message                                                                   |
+| -------------------------------- | ---- | ------------------------------------------------------------------------- |
+| Email déjà utilisé (table agent) | 409  | "Un agent avec cet email existe déjà"                                     |
+| Email déjà dans Supabase Auth    | 409  | "Un compte avec cet email existe déjà dans le système d'authentification" |
+| Champs manquants                 | 400  | "Nom, prénom, email, direction et département sont requis"                |
+| Format email invalide            | 400  | "Format d'email invalide"                                                 |

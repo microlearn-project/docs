@@ -1,0 +1,50 @@
+---
+title: Vue d'ensemble
+description: Présentation générale de la plateforme UTB Learn
+---
+
+# UTB Learn
+
+UTB Learn est la plateforme e-learning interne de l'**Union Togolaise de Banque (UTB)**, conçue pour centraliser et digitaliser la formation continue des agents.
+
+Elle se compose de deux interfaces complémentaires :
+
+- **Une application mobile** (Android) accessible aux agents UTB pour suivre leurs formations, consulter des documents, répondre à des quiz et télécharger des contenus hors-ligne.
+- **Un dashboard d'administration** accessible à la DSI et aux administrateurs pour gérer les modules, les cours, les agents et suivre les statistiques de progression.
+
+---
+
+## Objectifs de la plateforme
+
+<CardGroup cols={2}>
+  <Card title="Formation accessible" icon="mobile">
+    Permettre aux agents d'accéder à leurs formations depuis leur smartphone, à tout moment, même sans connexion internet.
+  </Card>
+  <Card title="Gestion centralisée" icon="sliders">
+    Donner aux administrateurs un espace unique pour créer et publier des modules, gérer les agents et suivre leur progression.
+  </Card>
+  <Card title="Contenus riches" icon="play">
+    Intégrer des vidéos, documents PDF et quiz interactifs dans chaque module de formation.
+  </Card>
+  <Card title="Traçabilité" icon="chart-line">
+    Journaliser toutes les actions importantes via un journal d'activité (`activity_log`) pour assurer la transparence et la conformité.
+  </Card>
+</CardGroup>
+
+---
+
+## Interfaces
+
+| Interface | Technologies | Accès |
+|-----------|-------------|-------|
+| Application mobile | React Native / Expo | Agents UTB (Android) |
+| Dashboard admin | Nuxt 4 / Nuxt UI | DSI / Administrateurs (Web) |
+| Backend & BDD | Supabase (PostgreSQL + Storage) | Partagé |
+
+---
+
+## Statut actuel
+
+<Note>
+UTB Learn est en phase de déploiement interne. Le dashboard admin est hébergé sur **Vercel**. L'application mobile est distribuée en interne via un fichier **APK** généré avec EAS Build.
+</Note>

@@ -1,0 +1,84 @@
+---
+title: Ajouter un cours avec vidéo
+description: Guide complet pour créer un cours avec vidéo dans UTB Learn
+---
+
+# Ajouter un cours avec vidéo
+
+Guide pas-à-pas pour créer un cours contenant une vidéo, depuis le dashboard admin jusqu'à sa disponibilité sur l'application mobile.
+
+---
+
+## Prérequis
+
+- Être connecté au dashboard admin avec un rôle ADMIN ou FORMATEUR
+- Avoir un module existant (ou en créer un nouveau via `/modules/create`)
+- Avoir une vidéo au format **MP4 ou WebM**, taille max **50 Mo**
+
+---
+
+## Étapes
+
+### 1. Ouvrir l'éditeur du module
+
+Depuis `/modules`, cliquer sur le menu `⋮` du module concerné → **Modifier** → accède à `/modules/edit/:id`.
+
+### 2. Aller à l'étape 2 — Cours
+
+Depuis le stepper, cliquer sur **"Cours"** (étape 2) ou valider l'étape 1 avec "Enregistrer et continuer".
+
+### 3. Créer ou éditer un cours
+
+- **Nouveau cours** : cliquer sur **"Ajouter un cours"**
+- **Cours existant** : cliquer sur l'icône ✏️ de la ligne du cours
+
+### 4. Rédiger le contenu et insérer la vidéo
+
+Dans l'éditeur TipTap :
+
+1. Rédiger le texte du cours
+2. Placer le curseur là où la vidéo doit apparaître
+3. Cliquer sur le bouton **vidéo** dans la toolbar de l'éditeur → un bloc d'upload s'insère
+4. Cliquer sur la zone d'upload ou glisser-déposer le fichier MP4/WebM
+5. Attendre la fin de l'upload (barre de progression verte)
+6. La vidéo apparaît directement dans l'éditeur sous forme de lecteur
+
+<Note>
+  L'upload est direct vers Supabase Storage depuis le
+  navigateur — Vercel n'est pas impliqué. La progression
+  s'affiche en temps réel. Ne pas fermer l'onglet pendant
+  l'upload.
+</Note>
+
+### 5. Sauvegarder le cours
+
+Cliquer sur **"Créer le cours"** (nouveau) ou **"Enregistrer"** (modification). L'éditeur se ferme et le cours apparaît dans la liste avec un badge **Vidéo** 🎬.
+
+### 6. Vérifier sur mobile
+
+La vidéo est immédiatement disponible sur l'application mobile pour les agents dont le département est associé au module (si le module est publié).
+
+---
+
+## Points de vigilance
+
+| Situation                       | Action                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| Upload échoue (réseau coupé)    | Réessayer — la vidéo ne sera pas ajoutée au cours                                     |
+| Fermeture onglet pendant upload | La vidéo devient orpheline → sera nettoyée la nuit suivante par `clean-orphan-videos` |
+| Vidéo invisible en dev local    | Vérifier `EXPO_PUBLIC_LOCAL_IP` dans `.env` mobile                                    |
+| Vidéo trop grande (>50 Mo)      | Compresser avec HandBrake ou ffmpeg avant upload                                      |
+
+---
+
+## Comprimer une vidéo avec ffmpeg
+
+```bash
+ffmpeg -i video_originale.mp4 \
+  -vcodec h264 \
+  -acodec aac \
+  -crf 28 \
+  video_compressée.mp4
+```
+
+`-crf 28` donne un bon équilibre qualité/taille. Augmenter pour réduire davantage (max ~35).

@@ -1,0 +1,102 @@
+---
+title: Upload de vidéos
+description: Uploader des vidéos de cours dans le dashboard admin UTB Learn
+---
+
+# Upload de vidéos
+
+Les vidéos sont insérées directement dans le contenu HTML des cours via un nœud TipTap custom. Elles sont stockées dans le bucket Supabase Storage `cours-videos`.
+
+---
+
+## Flux d'upload en 3 étapes
+
+L'upload contourne la limite de taille de Vercel (4.5 Mo) en envoyant directement vers Supabase Storage depuis le navigateur :
+
+```
+Navigateur                    Serveur Nuxt              Supabase Storage
+    │                              │                           │
+    │  1. POST /api/cours/         │                           │
+    │     video-signed-url         │                           │
+    │  (nom, type, taille,         │                           │
+    │   storagePath)               │                           │
+    │ ────────────────────────────>│                           │
+    │                              │  Génère signed URL        │
+    │ <────────────────────────────│                           │
+    │  { signedUrl, publicUrl }    │                           │
+    │                              │                           │
+    │  2. PUT signedUrl            │                           │
+    │     (fichier vidéo brut)     │                           │
+    │ ──────────────────────────────────────────────────────>  │
+    │ <──────────────────────────────────────────────────────  │
+    │  200 OK                      │                           │
+    │                              │                           │
+    │  3. Mise à jour éditeur      │                           │
+    │     avec publicUrl           │                           │
+```
+
+<Note>
+  L'upload direct via XHR permet d'afficher une **barre de
+  progression** en temps réel. La progression est suivie via
+  `xhr.upload.addEventListener("progress", ...)`.
+</Note>
+
+---
+
+## Nœud TipTap `VideoUpload`
+
+Le nœud est défini dans `components/modules/editor/VideoUpload.ts`. Il :
+
+- S'insère dans le contenu via la commande `insertVideoUpload()`
+- Stocke 3 attributs : `src`, `moduleId`, `coursId`
+- Se rend en balise `<video controls ...>` dans le HTML final si `src` est défini
+
+### Chemin de stockage
+
+Le chemin dans Supabase Storage est calculé selon le contexte :
+
+| Contexte                     | Chemin                        |
+| ---------------------------- | ----------------------------- |
+| Module + cours connus        | `{moduleId}/{coursId}`        |
+| Module connu, cours non créé | `{moduleId}/temp-{timestamp}` |
+| Aucun contexte               | `temp-{timestamp}`            |
+
+---
+
+## Validations côté client
+
+| Règle                | Détail                                 |
+| -------------------- | -------------------------------------- |
+| **Formats acceptés** | MP4 (`video/mp4`), WebM (`video/webm`) |
+| **Taille maximale**  | 50 Mo                                  |
+
+Un toast d'erreur s'affiche si le format ou la taille ne correspondent pas, sans déclencher l'upload.
+
+---
+
+## Affichage dans l'éditeur
+
+| État                | Affichage                                                  |
+| ------------------- | ---------------------------------------------------------- |
+| Pas encore uploadée | Zone de drop avec icône vidéo + spinner si upload en cours |
+| Upload en cours     | Barre de progression + pourcentage                         |
+| Vidéo uploadée      | Lecteur vidéo HTML5 avec bouton 🗑️ (visible au survol)     |
+
+Cliquer sur 🗑️ appelle `props.deleteNode()` qui supprime le nœud de l'éditeur. La vidéo reste dans Supabase Storage et sera nettoyée par la Edge Function si elle devient orpheline.
+
+---
+
+## Rendu HTML final
+
+```html
+<video
+  controls
+  style="width: 100%; border-radius: 0.5rem; margin: 1rem 0;"
+  data-type="video-upload"
+  data-module-id="uuid-module"
+  data-cours-id="uuid-cours"
+  src="https://<project>.supabase.co/storage/v1/object/public/cours-videos/..."
+></video>
+```
+
+Les attributs `data-module-id` et `data-cours-id` sont utilisés par l'application mobile pour résoudre les URLs en local development (remplacement `localhost → EXPO_PUBLIC_LOCAL_IP`).

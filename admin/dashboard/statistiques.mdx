@@ -1,0 +1,127 @@
+---
+title: Statistiques
+description: Détail des endpoints et calculs statistiques du tableau de bord UTB Learn
+---
+
+# Statistiques
+
+Cette page documente les trois endpoints API qui alimentent le tableau de bord, leurs sources de données et leurs règles de calcul.
+
+---
+
+## Endpoint 1 — Stats principales
+
+**Route :** `GET /api/dashboard/stats`
+
+Retourne les 4 indicateurs globaux de la plateforme.
+
+```ts
+interface DashboardStats {
+  totalAgents: number;        // Agents actifs
+  publishedModules: number;   // Modules publiés
+  completedQuiz: number;      // Quiz terminés
+  averageSuccessRate: number; // Taux de réussite (%)
+}
+```
+
+### Règles de calcul
+
+| Indicateur | Table | Conditions |
+|------------|-------|-----------|
+| `totalAgents` | `agent` | `actif = true` ET `deleted_at IS NULL` |
+| `publishedModules` | `module` | `publish = true` ET `deleted_at IS NULL` |
+| `completedQuiz` | `resultat_quiz` | `termine = true` |
+| `averageSuccessRate` | `resultat_quiz` | `(nb quiz avec score >= 50) / (total terminés) × 100` |
+
+<Note>
+Le seuil de réussite pour le calcul du taux est fixé à **50 points** (`score >= 50`). Ce seuil est différent de celui de l'application mobile qui utilise 70% pour l'affichage des badges de résultats.
+</Note>
+
+---
+
+## Endpoint 2 — Top modules
+
+**Route :** `GET /api/dashboard/top-modules`
+
+Retourne les **5 modules publiés** les plus suivis, triés par nombre de participants décroissant.
+
+```ts
+interface TopModule {
+  id_module: string;
+  titre: string;
+  participants: number; // Nombre de lignes dans suivi_module
+}
+```
+
+### Règles de calcul
+
+- Source : table `module` jointure avec `suivi_module` (count)
+- Filtre : `publish = true` ET `deleted_at IS NULL`
+- Tri : décroissant par `participants`
+- Limite : **5 premiers résultats**
+
+<Note>
+`participants` correspond au nombre d'entrées dans la table `suivi_module` pour ce module — c'est-à-dire le nombre d'agents ayant **commencé** le module, pas nécessairement terminé.
+</Note>
+
+---
+
+## Endpoint 3 — Aperçu hebdomadaire
+
+**Route :** `GET /api/dashboard/weekly-overview`
+
+Retourne les statistiques d'activité des **7 derniers jours** et de la **semaine précédente** (pour comparaison).
+
+```ts
+interface WeeklyStats {
+  agents_actifs_semaine: number;            // Agents distincts actifs cette semaine
+  agents_actifs_semaine_precedente: number; // Agents distincts semaine d'avant
+  modules_commences: number;                // Nouveaux débuts de module
+  quiz_completes: number;                   // Quiz terminés cette semaine
+  quiz_reussis: number;                     // Quiz avec score >= 50
+}
+```
+
+### Fenêtres temporelles
+
+```
+Semaine précédente       Semaine courante
+J-14 ──────── J-7        J-7 ──────── Maintenant
+```
+
+| Donnée | Table | Filtre temporel |
+|--------|-------|----------------|
+| `agents_actifs_semaine` | `activity_log` | `created_at` entre J-7 et maintenant — agents **distincts** (`Set` sur `user_id`) |
+| `agents_actifs_semaine_precedente` | `activity_log` | `created_at` entre J-14 et J-7 — agents **distincts** |
+| `modules_commences` | `suivi_module` | `date_debut` entre J-7 et maintenant |
+| `quiz_completes` | `resultat_quiz` | `termine = true` ET `date_fin` entre J-7 et maintenant |
+| `quiz_reussis` | `resultat_quiz` | Même filtre + `score >= 50` |
+
+### Indicateurs de tendance (agents actifs)
+
+La flèche et la couleur dans la carte "Agents actifs" sont calculées côté client :
+
+| Comparaison | Icône | Couleur |
+|-------------|-------|---------|
+| Cette semaine > semaine précédente | `trending-up` | Vert (success) |
+| Cette semaine < semaine précédente | `trending-down` | Rouge (error) |
+| Égal | `minus` | Neutre |
+
+### Couleur du taux de réussite quiz
+
+| Taux (`quiz_reussis / quiz_completes`) | Couleur |
+|----------------------------------------|---------|
+| ≥ 75% | Vert (success) |
+| ≥ 50% | Orange (warning) |
+| < 50% | Rouge (error) |
+| Aucun quiz complété | Neutre |
+
+---
+
+## Authentification des endpoints
+
+Les 3 endpoints vérifient la session serveur via `getUserSession(event)`. Une requête sans session valide retourne une erreur **401 Non authentifié**.
+
+<Warning>
+Ces endpoints utilisent la `SUPABASE_SERVICE_ROLE_KEY` côté serveur (via `createSupabaseServerClient`). Ils ne sont jamais appelés directement depuis le client mobile — uniquement depuis le dashboard Nuxt via server routes.
+</Warning>

@@ -1,0 +1,91 @@
+---
+title: Générer un APK Android
+description: Guide pour générer et distribuer l'APK Android UTB Learn
+---
+
+# Générer un APK Android
+
+Guide pour générer l'APK de distribution interne UTB Learn via EAS Build.
+
+---
+
+## Prérequis
+
+```bash
+# Vérifier que EAS CLI est installé et à jour
+eas --version   # doit être >= 16.3.0
+
+# Se connecter au compte Expo
+eas login
+```
+
+---
+
+## Générer l'APK (distribution interne)
+
+```bash
+# Depuis le dossier mobile/
+cd mobile
+
+# S'assurer que .env pointe vers Supabase production
+cat .env
+# EXPO_PUBLIC_SUPABASE_URL=https://...supabase.co  ← prod, pas localhost
+
+# Lancer le build preview (APK Release)
+eas build --platform android --profile preview
+```
+
+Le build s'exécute sur les serveurs Expo (~5-15 minutes). En fin de build, un lien de téléchargement s'affiche :
+
+```
+✔ Build finished
+Download URL: https://expo.dev/artifacts/eas/...apk
+```
+
+---
+
+## Télécharger et distribuer l'APK
+
+1. Télécharger l'APK depuis le lien EAS ou depuis [expo.dev](https://expo.dev) → Project → Builds
+2. Partager le fichier `.apk` aux agents UTB (email, serveur interne, lien direct)
+3. Sur Android : activer **"Sources inconnues"** dans Paramètres → Sécurité, puis installer l'APK
+
+<Note>
+  Conserver les APKs des versions précédentes dans un
+  dossier `releases/` dans le projet. En cas de régression,
+  redistribuer l'APK précédent immédiatement sans attendre
+  un nouveau build.
+</Note>
+
+---
+
+## Profils disponibles
+
+| Profil          | Commande                | Output                                  | Usage                    |
+| --------------- | ----------------------- | --------------------------------------- | ------------------------ |
+| **preview**   | `--profile preview`     | APK Release                             | Distribution interne UTB |
+| **release**     | `--profile release`     | APK Release (assembleRelease explicite) | Release candidate        |
+| **development** | `--profile development` | APK Debug + devClient                   | Dev avec modules natifs  |
+| **production**  | `--profile production`  | AAB                                     | Play Store (futur)       |
+
+---
+
+## Vérifier le numéro de version
+
+Le `versionCode` Android est géré automatiquement par EAS (`appVersionSource: "remote"`). Il s'incrémente à chaque build. Pour voir la version courante :
+
+```bash
+eas build:list --platform android --limit 5
+```
+
+---
+
+## Résoudre les problèmes courants
+
+| Problème                                     | Solution                                              |
+| -------------------------------------------- | ----------------------------------------------------- |
+| `eas-cli` version insuffisante               | `npm install -g eas-cli@latest`                       |
+| Build échoue — `NPM_CONFIG_LEGACY_PEER_DEPS` | Déjà configuré dans `eas.json` — vérifier la variable |
+| App crash au lancement                       | Vérifier que `.env` pointe vers prod et non localhost |
+| Émulateur Android ne démarre pas (Hyper-V)   | Tester sur un device physique Android                 |
+| `expo-dev-client` conflit avec Expo Go       | Utiliser le build `development` au lieu d'Expo Go     |

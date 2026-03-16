@@ -1,0 +1,124 @@
+---
+title: Comprendre les logs d'activité
+description: Guide pour lire et interpréter le journal d'activité UTB Learn
+---
+
+# Comprendre les logs d'activité
+
+Le journal d'activité (`activity_log`) trace toutes les actions importantes effectuées sur la plateforme. Ce guide explique comment lire et interpréter les entrées.
+
+---
+
+## Structure d'une entrée
+
+| Champ        | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `user_id`    | UUID de l'agent qui a effectué l'action — `null` si action système |
+| `action`     | Code de l'action (voir table ci-dessous)                           |
+| `objet_type` | Type de l'entité affectée (`agent`, `module`, `tag`…)              |
+| `objet_id`   | UUID de l'entité affectée                                          |
+| `meta`       | JSONB — détails libres selon le type d'action                      |
+| `created_at` | Horodatage de l'action                                             |
+
+---
+
+## Référentiel des actions
+
+| Code                   | Déclencheur                                   |
+| ---------------------- | --------------------------------------------- |
+| `connexion`            | Connexion réussie au dashboard admin          |
+| `deconnexion`          | Déconnexion explicite (bouton logout)         |
+| `agent_cree`           | Création d'un nouvel agent                    |
+| `agent_desactive`      | Soft-delete d'un agent avec dépendances       |
+| `agent_supprime`       | Hard-delete d'un agent sans dépendances       |
+| `agent_password_reset` | Réinitialisation du mot de passe (SUPERADMIN) |
+| `role_attribue`        | Attribution d'un rôle à un agent              |
+| `role_modifie`         | Modification d'un rôle existant               |
+| `role_revoque`         | Révocation d'un rôle                          |
+| `role_supprime`        | Suppression d'un rôle                         |
+| `categorie_creee`      | Création d'une catégorie (tag)                |
+| `categorie_supprimee`  | Suppression d'une catégorie                   |
+| `direction_cree`       | Création d'une direction                      |
+| `direction_supprime`   | Suppression d'une direction                   |
+| `departement_cree`     | Création d'un département                     |
+| `departement_supprime` | Suppression d'un département                  |
+
+---
+
+## Lire le champ `meta`
+
+Le champ `meta` contient des informations contextuelles selon l'action. Exemples :
+
+**`agent_cree`**
+
+```json
+{
+  "agent_cree": {
+    "id": "uuid",
+    "code_agent": "A3F7K2",
+    "nom": "DUPONT",
+    "prenom": "Jean",
+    "email": "jean.dupont@utb.tg"
+  },
+  "id_direction": "uuid-direction",
+  "id_departement": "uuid-departement"
+}
+```
+
+**`agent_supprime` (hard-delete)**
+
+```json
+{
+  "email": "jean.dupont@utb.tg",
+  "type": "hard_delete",
+  "auth_supprime": true
+}
+```
+
+**`agent_desactive` (soft-delete)**
+
+```json
+{
+  "email": "jean.dupont@utb.tg",
+  "type": "soft_delete",
+  "raison": "agent_utilise_dans_systeme"
+}
+```
+
+**`agent_password_reset`**
+
+```json
+{
+  "code_agent": "A3F7K2",
+  "nom_complet": "Jean DUPONT"
+}
+```
+
+---
+
+## Cas courants à surveiller
+
+| Situation                              | Ce qu'on voit dans les logs                                                             |
+| -------------------------------------- | --------------------------------------------------------------------------------------- |
+| Connexion inhabituelle                 | `connexion` avec `user_agent` ou `ip_address` inconnu (visible dans `admin_sessions`)   |
+| Agent supprimé mais données conservées | `agent_desactive` avec `type: "soft_delete"`                                            |
+| Agent définitivement effacé            | `agent_supprime` avec `type: "hard_delete"` et `auth_supprime: true`                    |
+| Réinitialisation de mot de passe       | `agent_password_reset` — vérifier que c'est bien un SUPERADMIN qui l'a fait (`user_id`) |
+| Action système sans utilisateur        | `user_id = null` — action automatique (Edge Function, pg_cron)                          |
+
+---
+
+## Filtrer efficacement
+
+Pour investiguer un incident :
+
+1. **Filtrer par action** → ex: `agent_supprime` pour voir toutes les suppressions
+2. **Filtrer par type** → ex: `agent` pour toutes les actions sur les agents
+3. **Rechercher par nom** → trouver toutes les actions d'un agent spécifique
+4. **Voir les détails** → cliquer sur 👁 pour lire le `meta` complet
+
+<Note>
+  Les logs sont en **lecture seule** depuis le dashboard.
+  Aucune modification ou suppression n'est possible via
+  l'interface.
+</Note>

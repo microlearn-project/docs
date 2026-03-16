@@ -1,0 +1,88 @@
+---
+title: Gestion des départements
+description: Gérer les départements dans le dashboard admin UTB Learn
+---
+
+# Gestion des départements
+
+Les départements (table `departement`) sont les unités organisationnelles d'affectation des agents. Chaque département appartient à une **direction**. Ils sont gérés depuis `/departements`.
+
+---
+
+## Tableau
+
+| Colonne                   | Description                                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
+| **Désignation**           | Nom du département                                                     |
+| **Direction**             | Direction parente — résolue via Map en mémoire depuis `/api/direction` |
+| **Statut**                | Badge vert Actif / rouge Inactif                                       |
+| **Dernière modification** | Date/heure                                                             |
+| **Créé le**               | Date/heure                                                             |
+
+Recherche sur la **Désignation**. Filtre statut : Tous / Actif / Inactif. Pagination : 10 lignes par page.
+
+---
+
+## Ajouter un département
+
+Bouton **"Ajouter"** → `DepartementsAddModal`. L'événement `@addservice` déclenche le `refresh()`.
+
+`POST /api/service/addservice`
+
+<Note>
+  L'endpoint est sous `/api/service/` (héritage du nommage
+  avant refactoring). La table cible est bien `departement`.
+  Ce mapping est documenté dans le refactoring `service →
+  departement` effectué en mars 2026.
+</Note>
+
+---
+
+## Modifier un département
+
+Sélectionner **1 ligne** → bouton "Modifier" → `DepartementsUpdateModal`.
+
+L'événement émis est `@updateservice` (héritage).
+
+`PATCH /api/service/updateservice`
+
+---
+
+## Activer / Désactiver un département
+
+Depuis le menu `⋮` de chaque ligne :
+
+| Action         | Endpoint                            | Effet           |
+| -------------- | ----------------------------------- | --------------- |
+| **Activer**    | `PATCH /api/service/:id/activate`   | `actif = true`  |
+| **Désactiver** | `PATCH /api/service/:id/deactivate` | `actif = false` |
+
+La mise à jour est appliquée **localement** dans le tableau sans rechargement réseau.
+
+<Warning>
+  Un département désactivé (`actif = false`) ne s'affiche
+  plus dans les modales de sélection lors de la création ou
+  modification d'un agent (filtre `actif = true` dans
+  `ServiceSelectModal`). Les agents déjà affectés à ce
+  département ne sont pas affectés.
+</Warning>
+
+---
+
+## Supprimer un département
+
+Menu `⋮` ou sélection multiple → `DepartementsDeleteModal`.
+
+`PATCH /api/service/soft-delete`
+
+Suppression locale immédiate dans le tableau après succès.
+
+---
+
+## Relation avec les agents et modules
+
+Les départements sont au cœur de plusieurs mécanismes :
+
+- **Agents** : chaque agent a un `id_departement` — utilisé pour filtrer les notifications et les modules recommandés côté mobile
+- **Modules** : les modules sont associés à des départements via la table `module_service` — seuls les modules du département de l'agent apparaissent par défaut dans l'app mobile
+- **Filtrage mobile** : le filtre "Départements" dans l'app mobile charge les modules d'autres départements via `/api/service` (`getAllDepartements()`)

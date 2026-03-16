@@ -1,0 +1,90 @@
+---
+title: clean-orphan-videos
+description: Edge Function de nettoyage des vidéos orphelines dans UTB Learn
+---
+
+# Edge Function : clean-orphan-videos
+
+Cette Edge Function Supabase nettoie automatiquement les vidéos orphelines du bucket `cours-videos` chaque nuit.
+
+---
+
+## Rôle
+
+Quand une vidéo est uploadée dans l'éditeur TipTap, elle est envoyée dans Supabase Storage **avant** d'être associée à un cours. Si l'utilisateur annule, ferme l'onglet ou si une erreur survient après l'upload, la vidéo reste dans le Storage sans référence en base de données. C'est une **vidéo orpheline**.
+
+Cette fonction nettoie ces fichiers pour éviter une consommation inutile du quota Storage.
+
+---
+
+## Déclenchement
+
+La fonction est appelée chaque nuit par **pg_cron**, l'extension de planification native de PostgreSQL dans Supabase.
+
+```sql
+-- Exemple de job pg_cron (configuré dans le dashboard Supabase)
+SELECT cron.schedule(
+  'clean-orphan-videos-nightly',
+  '0 2 * * *',   -- Tous les jours à 02:00 UTC
+  $$
+    SELECT net.http_post(
+      url := 'https://{project-ref}.supabase.co/functions/v1/clean-orphan-videos',
+      headers := '{"Authorization": "Bearer {service-role-key}"}'::jsonb
+    )
+  $$
+);
+```
+
+---
+
+## Algorithme
+
+```
+1. Lister tous les fichiers dans le bucket cours-videos/
+   → Supabase Storage list()
+
+2. Récupérer toutes les descriptions de cours en BDD
+   → SELECT description FROM cours WHERE deleted_at IS NULL
+
+3. Extraire les URLs vidéo depuis le HTML
+   → Regex sur les balises <video src="...cours-videos...">
+
+4. Calculer la différence
+   → Fichiers Storage \ URLs référencées en BDD = orphelins
+
+5. Supprimer les fichiers orphelins
+   → Supabase Storage remove(paths[])
+
+6. Retourner le rapport
+   → { deleted: N, errors: [] }
+```
+
+---
+
+## Cas couverts
+
+| Situation                              | Résultat                                         |
+| -------------------------------------- | ------------------------------------------------ |
+| Upload + onglet fermé sans sauvegarder | Fichier orphelin → supprimé le lendemain         |
+| Cours supprimé (soft-delete)           | Vidéo devenue orpheline → supprimée le lendemain |
+| Chemin `temp-*` non associé            | Supprimé le lendemain                            |
+| Vidéo référencée dans un cours actif   | Conservée                                        |
+
+<Warning>
+  La suppression est **irréversible**. Une vidéo supprimée
+  par la fonction n'est pas récupérable. Elle sera
+  considérée orpheline si son URL n'apparaît dans aucune
+  `description` de cours non supprimé.
+</Warning>
+
+---
+
+## Runtime
+
+Les Edge Functions Supabase tournent sur **Deno runtime**. Elles ont accès à la `SUPABASE_SERVICE_ROLE_KEY` via les variables d'environnement Supabase et peuvent effectuer des opérations admin (Storage + BDD) sans restriction RLS.
+
+---
+
+## Monitoring
+
+Les logs d'exécution sont disponibles dans le dashboard Supabase → Edge Functions → `clean-orphan-videos` → Logs. En cas d'erreur d'exécution, pg_cron ne retentera pas automatiquement — vérifier les logs manuellement si le quota Storage semble anormalement élevé.

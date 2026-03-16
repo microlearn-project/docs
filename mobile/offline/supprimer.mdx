@@ -1,0 +1,73 @@
+---
+title: Supprimer un module téléchargé
+description: Libérer l'espace en supprimant des modules hors-ligne dans UTB Learn
+---
+
+# Supprimer un module téléchargé
+
+La suppression d'un module hors-ligne libère l'espace de stockage occupé par ses fichiers (documents, vidéos, métadonnées).
+
+---
+
+## Activer le mode gestion
+
+Depuis l'écran **"Modules téléchargés"**, appuyer sur **"Gérer le stockage"** dans la carte de stockage. Un bouton 🗑️ apparaît sur chaque carte module. Appuyer à nouveau sur **"Terminer"** désactive le mode gestion.
+
+---
+
+## Supprimer un module
+
+En mode gestion, appuyer sur 🗑️ ouvre une **modale de confirmation** `DeleteConfirmModal` :
+
+```
+┌──────────────────────────────────────┐
+│  Supprimer ce module ?               │
+│                                      │
+│  "Conformité et Réglementation"      │
+│  sera supprimé de votre appareil.    │
+│                                      │
+│  [Annuler]      [Supprimer]          │
+└──────────────────────────────────────┘
+```
+
+Confirmer déclenche `OfflineService.deleteModule()` qui supprime :
+
+1. Tous les fichiers médias du module (documents + vidéos) via `StorageService.deleteModule()`
+2. Le fichier de métadonnées JSON
+3. Le répertoire du module dans `expo-file-system`
+
+Après suppression :
+
+- La carte disparaît de la liste immédiatement (mise à jour locale)
+- Le `DownloadContext` est rafraîchi (`refreshDownloadedModules()`) — la coche verte ✅ disparaît sur les cartes modules dans les autres écrans
+- La taille de stockage affichée est recalculée
+- Toast de succès : **"Module supprimé — L'espace a été libéré"**
+
+---
+
+## Espace de stockage
+
+La carte de stockage se met à jour après chaque suppression. L'espace est calculé via `StorageService.getStorageInfo()` qui analyse le dossier `expo-file-system` du module.
+
+```
+Avant :  3 modules téléchargés    28.4 Mo  ████░░░░░
+Après :  2 modules téléchargés    16.2 Mo  ██░░░░░░░
+```
+
+---
+
+## Pull to refresh
+
+Tirer la liste vers le bas recharge la liste des modules téléchargés et recalcule la taille de stockage. Utile pour synchroniser après une suppression externe ou une erreur d'affichage.
+
+---
+
+## Comportement si suppression échoue
+
+En cas d'erreur lors de la suppression (ex: fichier déjà absent), un toast d'erreur s'affiche : **"Impossible de supprimer le module"**. La liste n'est pas modifiée.
+
+<Note>
+  La suppression est **définitive** — le module devra être
+  retéléchargé pour être à nouveau disponible hors-ligne.
+  Cela nécessite une connexion internet.
+</Note>

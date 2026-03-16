@@ -1,0 +1,78 @@
+---
+title: Déployer une nouvelle version
+description: Déployer le dashboard admin et l'application mobile UTB Learn
+---
+
+# Déployer une nouvelle version
+
+---
+
+## Dashboard Admin (Vercel)
+
+Le déploiement est **automatique** à chaque push sur `main`.
+
+```bash
+# 1. S'assurer que le build passe en local
+pnpm build
+
+# 2. Pousser sur main
+git add .
+git commit -m "feat: description de la modification"
+git push origin main
+
+# → Vercel détecte le push et démarre le déploiement automatiquement
+# → URL de production mise à jour en ~2-3 minutes
+```
+
+Suivre le déploiement sur [vercel.com](https://vercel.com) → Project → Deployments.
+
+---
+
+## Application Mobile — APK interne (distribution UTB)
+
+```bash
+# 1. S'assurer que les variables d'environnement .env sont correctes
+# (pointer vers Supabase production)
+
+# 2. Se connecter à EAS (si pas encore fait)
+eas login
+
+# 3. Builder l'APK avec le profil preview
+eas build --platform android --profile preview
+
+# → Build en cours sur les serveurs Expo (~5-10 min)
+# → Lien de téléchargement affiché en fin de build
+# → APK téléchargeable depuis expo.dev ou le lien direct
+```
+
+<Tip>
+  Le profil `preview` génère un APK signé Release
+  directement installable sur Android. C'est le profil
+  standard pour la distribution interne UTB.
+</Tip>
+
+---
+
+## Checklist avant déploiement
+
+**Dashboard :**
+
+- [ ] `pnpm build` passe sans erreur en local
+- [ ] `pnpm typecheck` passe
+- [ ] Variables d'environnement production configurées sur Vercel
+- [ ] Migrations Supabase appliquées si changement de schéma (`supabase db push`)
+
+**Mobile :**
+
+- [ ] `.env` pointe vers Supabase **production** (pas local)
+- [ ] `EXPO_PUBLIC_LOCAL_IP` **non définie** ou vide en production
+- [ ] Version de l'app incrémentée dans `app.json` si nécessaire
+- [ ] `eas build --profile preview` terminé sans erreur
+
+---
+
+## Rollback
+
+**Dashboard :** Sur Vercel → Deployments → clic sur un déploiement précédent → "Promote to Production".
+
+**Mobile :** Redistribuer l'APK de la version précédente (conserver les APKs des versions précédentes dans un dossier `releases/`).

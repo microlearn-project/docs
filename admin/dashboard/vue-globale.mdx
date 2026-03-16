@@ -1,0 +1,101 @@
+---
+title: Vue globale
+description: Tableau de bord principal du dashboard admin UTB Learn
+---
+
+# Vue globale
+
+Le tableau de bord est la page d'accueil du dashboard admin. Il centralise les indicateurs clés de la plateforme, les modules les plus suivis et un aperçu de l'activité de la semaine.
+
+---
+
+## Aperçu
+
+![Tableau de bord — vue globale](/images/admin/dashboard-overview.jpg)
+
+---
+
+## Accès selon le rôle
+
+Le tableau de bord s'adapte au rôle de l'utilisateur connecté :
+
+| Rôle | Accès |
+|------|-------|
+| **Administrateur** | Vue complète (stats + top modules + actions rapides + aperçu semaine) |
+| **FORMATEUR** | Vue réduite — le bloc **Actions rapides** est masqué |
+
+---
+
+## Composants de la page
+
+La page est composée de 4 blocs empilés :
+
+```
+┌─────────────────────────────────────────┐
+│  Stats principales (4 cartes)           │  ← HomeStatsUtb
+├─────────────────────────────────────────┤
+│  Top 5 modules les plus suivis          │  ← HomeTopModules
+├─────────────────────────────────────────┤
+│  Actions rapides (masqué pour FORMATEUR)│  ← UCard conditionnel
+├─────────────────────────────────────────┤
+│  Aperçu rapide — 7 derniers jours       │  ← HomeWeeklyOverview
+└─────────────────────────────────────────┘
+```
+
+---
+
+### Stats principales
+
+4 cartes en grille horizontale, chargées depuis `/api/dashboard/stats` :
+
+| Carte | Icône | Couleur | Donnée |
+|-------|-------|---------|--------|
+| **Agents Actifs** | 👥 | Bleu (primary) | Agents avec `actif = true` et non supprimés |
+| **Modules Publiés** | 📖 | Vert (success) | Modules avec `publish = true` et non supprimés |
+| **Quiz Complétés** | ✅ | Info | Entrées `resultat_quiz` avec `termine = true` |
+| **Taux de Réussite** | 📈 | Warning | % de quiz avec `score >= 50` sur total terminés |
+
+Pendant le chargement, chaque carte affiche `---` à la place de la valeur.
+
+<Note>
+Le **Taux de Réussite** est calculé côté serveur : nombre de quiz avec `score >= 50` divisé par le total des quiz terminés, arrondi à l'entier.
+</Note>
+
+---
+
+### Top 5 modules
+
+Liste des 5 modules publiés les plus suivis, chargée depuis `/api/dashboard/top-modules`. Chaque ligne affiche :
+
+- Un **badge de classement** coloré (🥇 orange, 🥈 gris, 🥉 bleu, autres grisés)
+- Le **titre du module** cliquable → redirige vers `/modules/edit/:id`
+- Un **badge bleu** avec le nombre de participants (`suivi_module` count)
+
+Pendant le chargement, 5 lignes squelettes s'affichent. Si aucun module publié n'existe, un état vide s'affiche.
+
+---
+
+### Actions rapides
+
+Grille de 4 boutons de navigation rapide (masquée pour le rôle `FORMATEUR`) :
+
+| Bouton | Destination |
+|--------|------------|
+| **Gérer les modules** | `/modules` |
+| **Voir les agents** | `/agents` |
+| **Résultats des quiz** | `/quiz-results` |
+| **Les départements** | `/departements` |
+
+---
+
+### Aperçu rapide — 7 derniers jours
+
+3 cartes côte à côte chargées depuis `/api/dashboard/weekly-overview` (voir [Statistiques](/admin/dashboard/statistiques) pour le détail) :
+
+| Carte | Donnée | Indicateur couleur |
+|-------|--------|--------------------|
+| **Agents actifs** | Nb agents distincts dans `activity_log` cette semaine | ↑ vert / ↓ rouge / = neutre vs semaine précédente |
+| **Modules commencés** | Nouveaux `suivi_module.date_debut` cette semaine | Fixe bleu (info) |
+| **Quiz réussis** | `quiz_reussis / quiz_completes` | &ge;75% vert / &ge;50% orange / &lt;50% rouge |
+
+Pendant le chargement, 3 squelettes `h-32` s'affichent.

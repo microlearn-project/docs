@@ -1,0 +1,71 @@
+---
+title: Vercel (Dashboard)
+description: Déploiement du dashboard admin UTB Learn sur Vercel
+---
+
+# Vercel — Déploiement du dashboard
+
+Le dashboard admin Nuxt 4 est hébergé sur **Vercel** avec déploiement automatique depuis Git.
+
+---
+
+## Déploiement automatique
+
+Chaque push sur la branche principale (`main`) déclenche automatiquement un nouveau déploiement. Vercel détecte Nuxt 4 et configure le build automatiquement.
+
+```
+Push sur main
+     │
+     ▼
+Vercel Build
+  pnpm install
+  pnpm build (nuxt build)
+     │
+     ▼
+Déploiement
+  URL production mise à jour
+```
+
+---
+
+## Variables d'environnement
+
+Les variables sont à configurer dans **Vercel → Project → Settings → Environment Variables** :
+
+| Variable                    | Scope      |
+| --------------------------- | ---------- |
+| `NUXT_SUPABASE_URL`         | Production |
+| `NUXT_SUPABASE_ANON_KEY`    | Production |
+| `SUPABASE_SERVICE_ROLE_KEY` | Production |
+
+<Warning>
+  Ne jamais committer les valeurs de production dans `.env`.
+  Utiliser exclusivement les variables d'environnement
+  Vercel pour la production.
+</Warning>
+
+---
+
+## Limites Vercel à connaître
+
+| Limite                  | Valeur            | Impact                                                                         |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------ |
+| **Taille des requêtes** | 4.5 Mo max        | L'upload de vidéos bypasse Vercel via Signed URL directe vers Supabase Storage |
+| **Timeout serverless**  | 10s (plan Hobby)  | Les server routes Nuxt ne doivent pas dépasser ce délai                        |
+| **Build minutes**       | Limité plan Hobby | Surveiller la consommation si déploiements fréquents                           |
+
+---
+
+## Problème réseau ISP → Vercel
+
+Si Vercel est inaccessible depuis le réseau de développement (ISP bloquant les IP Vercel) :
+
+**Solution temporaire :** Utiliser **Cloudflare WARP** (VPN gratuit) pour contourner le blocage.
+
+**Solution permanente recommandée :** Migrer l'hébergement vers **Cloudflare Pages** qui ne présente pas ce problème depuis les réseaux locaux africains.
+
+---
+
+## Preview deployments
+
+Chaque Pull Request génère automatiquement un **déploiement de preview** avec une URL unique. Pratique pour tester des modifications avant merge sur main.

@@ -1,0 +1,84 @@
+---
+title: Connexion
+description: Se connecter à l'application mobile UTB Learn
+---
+
+# Connexion
+
+L'écran de connexion est le point d'entrée de l'application. Chaque agent UTB se connecte avec son **code agent** (6 caractères) et son **mot de passe**.
+
+---
+
+## Écran de connexion
+
+![Écran de connexion UTB Learn](/images/mobile/login-screen.jpg)
+
+---
+
+## Remplir le formulaire
+
+### 1. Code Agent
+
+Le code agent est saisi caractère par caractère dans **6 cases individuelles**.
+
+- Chaque case accepte un seul caractère alphanumérique
+- Le curseur passe automatiquement à la case suivante après chaque saisie
+- Il est possible de **coller** un code complet directement — les 6 cases se remplissent automatiquement
+- La touche `Retour arrière` sur une case vide revient à la case précédente
+- Les cases remplies passent en surbrillance bleue
+
+<Tip>
+Le code agent est communiqué par la DSI lors de la création du compte. Il est composé de 6 caractères alphanumériques (lettres et chiffres).
+</Tip>
+
+### 2. Mot de passe
+
+- Saisir le mot de passe dans le champ dédié
+- Appuyer sur l'icône 👁️ pour afficher ou masquer le mot de passe
+- Le bouton **Se Connecter** reste grisé tant que les deux champs ne sont pas remplis
+
+---
+
+## Se connecter
+
+Une fois les deux champs remplis, appuyer sur **Se Connecter**.
+
+```
+Comportement selon la situation :
+
+✅ Identifiants valides    → Redirection vers l'accueil
+❌ Code ou mot de passe incorrect → Message d'erreur (toast)
+⚠️ Champs incomplets      → Bouton désactivé (grisé)
+```
+
+<Note>
+La session est **persistante** : une fois connecté, l'agent reste connecté même après fermeture de l'application. La reconnexion n'est demandée qu'après une déconnexion manuelle ou une expiration de session Supabase.
+</Note>
+
+---
+
+## Mot de passe oublié
+
+Appuyer sur **"mot de passe oublié ?"** en bas du formulaire.
+
+L'agent est redirigé vers le flux de réinitialisation par email :
+
+```
+1. Saisir l'email UTB associé au compte
+2. Recevoir un code OTP par email
+3. Saisir le code OTP
+4. Définir un nouveau mot de passe
+```
+
+---
+
+## Comportement hors-ligne
+
+Si l'application est ouverte sans connexion internet :
+
+- La session existante est **chargée depuis le stockage local** (AsyncStorage) — l'agent accède directement à l'accueil si déjà connecté
+- Si l'agent n'est pas encore connecté, la connexion nécessite une connexion internet active
+
+<Warning>
+La première connexion requiert obligatoirement une connexion internet pour authentifier le compte auprès de Supabase.
+</Warning>

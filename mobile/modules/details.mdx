@@ -1,0 +1,125 @@
+---
+title: Détails du module
+description: Consulter le détail d'un module de formation dans l'application mobile UTB Learn
+---
+
+# Détails du module
+
+La page de détails affiche toutes les informations d'un module : description, statistiques, progression globale et liste des cours. C'est depuis cette page que l'agent démarre ou continue sa formation.
+
+---
+
+## Aperçu
+
+![Détails du module — haut](/images/mobile/module-details.jpg)
+
+![Détails du module — liste des cours](/images/mobile/module-details-1.jpg)
+
+---
+
+## En-tête
+
+```
+←     Détails du module     ⬇
+```
+
+| Élément | Rôle |
+|---------|------|
+| `←` | Retour vers la liste d'origine (Accueil ou Modules) |
+| **Détails du module** | Titre fixe de la page |
+| `⬇` | Télécharger le module pour accès hors-ligne (visible si `downloadEnabled`) |
+
+L'icône de téléchargement change d'état selon la situation :
+
+| État | Icône |
+|------|-------|
+| Non téléchargé | Icône download |
+| Téléchargement en cours | Spinner |
+| Téléchargé | ✅ Coche verte |
+
+---
+
+## Informations du module
+
+- **Titre** en gras (ex: *Conformité et Réglementation Bancaire*)
+- **Tags** défilants horizontalement (ex: Conformité, Obligatoire, Réglementation)
+- **Description** rendue en HTML riche (`react-native-render-html`) — supporte les titres, listes, paragraphes et images inline
+
+---
+
+## Statistiques
+
+Trois indicateurs en cards :
+
+| Indicateur | Icône | Description |
+|------------|-------|-------------|
+| **Durée** | 🕐 (bleu) | Durée totale estimée du module |
+| **Cours** | 📖 (violet) | Nombre total de cours dans le module |
+| **Complété** | 📈 (vert) | Cours terminés / total (ex: 1/4) |
+
+---
+
+## Carte de progression globale
+
+Une carte bleue gradient affiche :
+
+- Le pourcentage de progression (ex: **45%**)
+- Une barre de progression blanche
+- Un texte dynamique :
+  - `Encore X% pour terminer ce module` si en cours
+  - `Module complété !` si à 100%
+
+---
+
+## Liste des cours
+
+Section **"Liste des cours"** avec compteur `X/Y` (cours terminés / total).
+
+Chaque cours est affiché sous forme de carte avec :
+
+| Élément | Description |
+|---------|-------------|
+| **Numéro d'ordre** | Position du cours dans le module |
+| **Titre** | Nom du cours |
+| **Durée** | Durée estimée de lecture |
+| **État accessible** | Cours déverrouillé (fond vert/bleu) ou verrouillé (grisé avec 🔒) |
+| **État terminé** | Coche verte si complété |
+| **En cours** | Mis en évidence si c'est le cours suivant à faire |
+
+<Note>
+Les cours se déverrouillent progressivement. Un cours verrouillé (🔒) ne peut pas être ouvert tant que le cours précédent n'est pas terminé.
+</Note>
+
+Appuyer sur un cours accessible ouvre la [page du cours](/mobile/formations/cours).
+
+---
+
+## Bouton principal
+
+Un bouton fixe en bas de l'écran change de libellé selon la progression :
+
+| Progression | Texte du bouton |
+|-------------|----------------|
+| 0% | **Commencer la formation** |
+| 1–99% | **Continuer la formation** |
+| 100% | **Revoir la formation** |
+
+Appuyer sur ce bouton ouvre directement le **prochain cours accessible non terminé**.
+
+---
+
+## Navigation retour
+
+La page mémorise son **origine** (`from` param) :
+
+| Origine | Comportement du `←` |
+|---------|---------------------|
+| `home` | Retour vers l'onglet Accueil |
+| `modules` | Retour vers l'onglet Modules |
+| Autre | `router.back()` |
+
+---
+
+## Mode hors-ligne
+
+Si le module est téléchargé et que l'agent est hors-ligne, la page se charge depuis le **stockage local** (AsyncStorage). Les cours sont accessibles normalement. Le téléchargement et le pull-to-refresh sont désactivés sans connexion.

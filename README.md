@@ -1,43 +1,70 @@
-# Mintlify Starter Kit
+# UTB Learn — Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Documentation technique et fonctionnelle de la plateforme e-learning interne de l'**Union Togolaise de Banque (UTB)**.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+Construite avec [Mintlify](https://mintlify.com).
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+---
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+## Structure
 
 ```
-npm i -g mint
+docs/
+├── intro/          → Présentation, stack, architecture, installation
+├── mobile/         → Application Android (React Native / Expo)
+│   ├── modules/
+│   ├── formations/
+│   ├── quiz/
+│   ├── offline/
+│   ├── profil/
+│   └── build/
+├── admin/          → Dashboard administration (Nuxt 4)
+│   ├── dashboard/
+│   ├── agents/
+│   ├── modules/
+│   ├── quiz/
+│   ├── categories/
+│   ├── directions/
+│   ├── departements/
+│   └── logs/
+├── infra/          → Supabase, Storage, Edge Functions, Vercel
+└── guides/         → Guides opérationnels
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+---
 
+## Lancer en local
+
+```bash
+npm install -g mintlify
+mintlify dev
 ```
-mint dev
-```
 
-View your local preview at `http://localhost:3000`.
+Ouvre [http://localhost:3000](http://localhost:3000).
 
-## Publishing changes
+---
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## Déploiement
 
-## Need help?
+La documentation est déployée automatiquement via **Mintlify Cloud** à chaque push sur `main`.
 
-### Troubleshooting
+---
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+## Stack documentée
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+| Interface | Technologies |
+|-----------|-------------|
+| Application mobile | React Native, Expo SDK 54, Expo Router, Supabase JS |
+| Dashboard admin | Nuxt 4, Nuxt UI v3, TipTap 3, Supabase JS |
+| Backend & BDD | Supabase (PostgreSQL, Storage, Auth, Edge Functions) |
+| Hosting | Vercel (dashboard), EAS Build (APK Android) |
+
+---
+
+## Contenu
+
+- **61 pages** couvrant l'intégralité du projet
+- Schémas d'architecture et de BDD
+- Guides opérationnels (déploiement, upload vidéo, APK, logs)
+- Documentation des endpoints API et Edge Functions
+- Variables d'environnement dev et production

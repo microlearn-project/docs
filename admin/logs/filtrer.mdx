@@ -1,0 +1,151 @@
+---
+title: Filtrer les logs
+description: Filtrer le journal d'activité dans le dashboard admin UTB Learn
+---
+
+# Filtrer les logs
+
+3 filtres combinables permettent de cibler des entrées spécifiques dans le journal d'activité.
+
+---
+
+## Filtres disponibles
+
+### Recherche libre
+
+Filtre **côté client** (en mémoire, sans appel réseau) sur :
+
+- Nom + prénom de l'agent
+- Code agent
+- Libellé de l'action
+
+Un bouton ✕ s'affiche dans le champ dès qu'une saisie est détectée.
+
+### Filtre par action
+
+Sélection via `DocumentsActivityLogActionSelectModal`. Les actions disponibles :
+
+| Valeur                 | Libellé              |
+| ---------------------- | -------------------- |
+| `connexion`            | Connexion            |
+| `deconnexion`          | Déconnexion          |
+| `agent_cree`           | Agent créé           |
+| `role_attribue`        | Rôle attribué        |
+| `role_modifie`         | Rôle modifié         |
+| `role_revoque`         | Rôle révoqué         |
+| `role_supprime`        | Rôle supprimé        |
+| `categorie_creee`      | Catégorie créée      |
+| `categorie_supprimee`  | Catégorie supprimée  |
+| `direction_cree`       | Direction créé       |
+| `direction_supprime`   | Direction supprimé   |
+| `departement_cree`     | Département créé     |
+| `departement_supprime` | Département supprimé |
+
+Ce filtre déclenche un **appel serveur** (`PATCH /api/activity-log?action=...`) et remet la page à 1.
+
+### Filtre par type d'objet
+
+Sélection via `DocumentsActivityLogTypeSelectModal`. Les types disponibles :
+
+| Valeur        | Libellé     |
+| ------------- | ----------- |
+| `agent`       | Agent       |
+| `user_role`   | User Role   |
+| `session`     | Session     |
+| `tag`         | Catégorie   |
+| `direction`   | Direction   |
+| `departement` | Département |
+
+Ce filtre déclenche également un **appel serveur** et remet la page à 1.
+
+---
+
+## Résumé des filtres actifs
+
+Quand au moins un filtre est actif, une ligne de badges colorés s'affiche sous les filtres :
+
+```
+Filtres actifs :
+[Action: Connexion]  [Type: Agent]  [Recherche: "dupont"]   [Réinitialiser]
+```
+
+Le bouton **"Réinitialiser"** efface les 3 filtres simultanément.
+
+---
+
+## Modale de détail
+
+Cliquer sur 👁 dans une ligne ouvre une modale avec toutes les informations de l'entrée :
+
+```
+┌─────────────────────────────────────────┐
+│ Détail de l'activité                    │
+├─────────────────────────────────────────┤
+│ Date          │ 15 mars 2026, 09:30:00  │
+│ Action        │ [Agent créé]            │
+├─────────────────────────────────────────┤
+│ Utilisateur                             │
+│  [JD]  Jean DUPONT                      │
+│        jean.dupont@utb.tg               │
+│        Code: A3F7K2                     │
+├─────────────────────────────────────────┤
+│ Type d'objet  │ agent                   │
+│ ID de l'objet │ uuid-xxxx               │
+├─────────────────────────────────────────┤
+│ Détails supplémentaires                 │
+│  agent cree                             │
+│    ├── id: uuid                         │
+│    ├── code_agent: B2K9M1              │
+│    ├── nom: KONE                        │
+│    └── email: marie.kone@utb.tg        │
+│  id direction: uuid                     │
+│  id departement: uuid                   │
+└─────────────────────────────────────────┘
+```
+
+Le champ `meta` (JSONB) est affiché de façon récursive :
+
+- Les clés avec une valeur scalaire → ligne `clé : valeur`
+- Les clés avec un objet imbriqué → sous-section avec indentation
+
+Les underscores dans les clés (`_`) sont remplacés par des espaces pour la lisibilité.
+
+---
+
+## Structure d'un log (table `activity_log`)
+
+```
+activity_log
+──────────────────────────────
+id            UUID (PK)
+user_id       UUID (FK → agent, nullable — null = action système)
+action        string  (ex: "agent_cree", "connexion")
+objet_type    string  (ex: "agent", "tag")
+objet_id      UUID    (ID de l'entité concernée)
+meta          JSONB   (détails libres selon l'action)
+created_at    datetime
+```
+
+<Note>
+  `user_id = null` signifie une action système (ex:
+  nettoyage automatique, Edge Function). Ces entrées
+  s'affichent avec "Système" dans la colonne Utilisateur.
+</Note>
+
+---
+
+## Paramètres d'API disponibles
+
+L'endpoint `GET /api/activity-log` accepte les paramètres suivants :
+
+| Paramètre    | Type         | Description                  |
+| ------------ | ------------ | ---------------------------- |
+| `page`       | number       | Page courante (défaut : 1)   |
+| `limit`      | number       | Taille de page (défaut : 20) |
+| `action`     | string       | Filtrer par action exacte    |
+| `objet_type` | string       | Filtrer par type d'objet     |
+| `user_id`    | UUID         | Filtrer par agent            |
+| `from_date`  | ISO datetime | Date de début                |
+| `to_date`    | ISO datetime | Date de fin                  |
+
+Les résultats sont triés par `created_at DESC` (plus récent en premier).

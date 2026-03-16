@@ -1,0 +1,73 @@
+---
+title: Documents
+description: Gérer les documents annexes des modules et cours dans le dashboard admin UTB Learn
+---
+
+# Documents
+
+Les documents sont des fichiers (PDF, images, etc.) attachés à un module puis assignés à des cours spécifiques. La gestion se fait en deux temps : upload au niveau module, puis association au niveau cours.
+
+---
+
+## Niveau 1 — Upload sur le module
+
+Les documents sont d'abord uploadés au module via la modale **"Documents"** accessible depuis l'étape 1 de l'éditeur ou depuis le menu `⋮` de la liste des modules.
+
+### Upload (`POST /api/module/documents/upload`)
+
+L'upload accepte tout type de fichier via `multipart/form-data` avec les champs `file` et `id_module`.
+
+**Nettoyage du nom de fichier côté serveur :**
+
+| Transformation                | Exemple                                           |
+| ----------------------------- | ------------------------------------------------- |
+| Suppression des accents       | `"Méthode.pdf"` → `"methode.pdf"`                 |
+| Espaces → underscores         | `"État avancement.pdf"` → `"etat_avancement.pdf"` |
+| Caractères spéciaux supprimés | `"rapport (2024).pdf"` → `"rapport_2024.pdf"`     |
+| Timestamp unique ajouté       | `"methode_1710000000000.pdf"`                     |
+| Tout en minuscules            |                                                   |
+
+Le chemin dans Supabase Storage suit le format : `modules/{id_module}/{nom_nettoyé_timestamp}.ext`
+
+**Deux valeurs sont stockées en BDD :**
+
+| Colonne        | Contenu                                  |
+| -------------- | ---------------------------------------- |
+| `fichier`      | Chemin relatif dans Storage (nettoyé)    |
+| `nom_original` | Nom original du fichier pour l'affichage |
+
+<Note>
+  En cas d'échec de l'insertion en BDD après upload Storage
+  réussi, le fichier est automatiquement supprimé du Storage
+  (rollback).
+</Note>
+
+---
+
+## Niveau 2 — Association aux cours
+
+Une fois uploadés, les documents peuvent être associés à un ou plusieurs cours via la modale `ModulesCoursDocumentsModal` (icône 📎 dans la liste des cours).
+
+La modale liste tous les documents du module. Cliquer sur une ligne la sélectionne (fond bleu). Les documents sélectionnés sont sauvegardés comme un tableau d'**URLs complètes** dans `cours.documents` via `PATCH /api/cours/update`.
+
+### Construction de l'URL publique
+
+Le composant reconstruit l'URL complète depuis le chemin relatif :
+
+```
+https://{supabase-project}.supabase.co/storage/v1/object/public/documents/{chemin}
+```
+
+Si le fichier est déjà une URL complète (anciens documents), elle est utilisée telle quelle.
+
+<Warning>
+  Un même document peut être associé à plusieurs cours du
+  même module. La suppression d'un document du module ne
+  désassocie pas automatiquement les cours qui l'utilisent.
+</Warning>
+
+---
+
+## Affichage sur mobile
+
+Sur l'application mobile, les documents associés à un cours s'affichent dans la section **"Documents annexes"** en bas de la page du cours. Le nom affiché est `nom_original` (le vrai nom du fichier, pas le chemin nettoyé). Voir [Documents annexes (mobile)](/mobile/formations/documents).

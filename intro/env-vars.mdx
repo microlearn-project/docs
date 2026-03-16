@@ -1,0 +1,116 @@
+---
+title: Variables d'environnement
+description: Configuration des variables d'environnement pour le dashboard admin et l'app mobile
+---
+
+# Variables d'environnement
+
+UTB Learn utilise deux interfaces distinctes, chacune avec son propre fichier de configuration. Cette page liste toutes les variables nécessaires pour faire tourner le projet en local et en production.
+
+---
+
+## Dashboard Admin (Nuxt 4)
+
+Le dashboard utilise deux fichiers `.env` selon l'environnement :
+
+| Fichier | Environnement | Commande de lancement |
+|---------|--------------|----------------------|
+| `.env` | Production / Vercel | `pnpm build` |
+| `.env.local` | Développement local (Supabase local) | `pnpm dev:local` |
+
+<Tabs>
+  <Tab title="Production">
+```bash
+# .env (dashboard admin — production)
+
+NUXT_SUPABASE_URL=https://<project-ref>.supabase.co
+NUXT_SUPABASE_ANON_KEY=<anon-public-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
+  </Tab>
+  <Tab title="Développement local">
+```bash
+# .env.local (dashboard admin — Supabase local)
+
+NUXT_SUPABASE_URL=http://localhost:54321
+NUXT_SUPABASE_ANON_KEY=<anon-key-local>        # fournie par `supabase start`
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key-local>
+```
+  </Tab>
+</Tabs>
+
+<Tip>
+Après `supabase start`, la CLI affiche les clés locales directement dans le terminal :
+```
+API URL: http://127.0.0.1:54321
+anon key: eyJ...
+service_role key: eyJ...
+```
+Copie-les dans ton `.env.local`.
+</Tip>
+
+<Warning>
+Ne commite jamais le fichier `.env` ou `.env.local` dans Git. Vérifie que `.gitignore` contient bien `.env*` avant tout push.
+</Warning>
+
+---
+
+## Application Mobile (Expo)
+
+L'app mobile utilise un fichier `.env` à la racine du projet Expo. Les variables exposées au runtime doivent être préfixées `EXPO_PUBLIC_`.
+
+<Tabs>
+  <Tab title="Développement & Production"> 
+  ```bash
+# .env (app mobile)
+
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
+EXPO_PUBLIC_LOCAL_IP=<ip-lan-machine-dev>   # ex: 192.168.1.135
+```
+  </Tab>
+  <Tab title="Tests avec Supabase local"> 
+  ```bash
+# .env.local (app mobile — Supabase local)
+
+EXPO_PUBLIC_SUPABASE_URL=http://${EXPO_PUBLIC_LOCAL_IP}:54321
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-key-local>
+EXPO_PUBLIC_LOCAL_IP=192.168.1.135
+```
+  </Tab>
+</Tabs>
+
+<Warning>
+En développement local sur device physique, utilise `EXPO_PUBLIC_LOCAL_IP` (IP LAN de ta machine, ex: `192.168.1.135`) et non `localhost`. Le téléphone ne peut pas résoudre `localhost` vers ta machine de développement.
+</Warning>
+
+<Note>
+Expo charge automatiquement le fichier `.env` à la racine du projet. Pour switcher entre environnements, tu peux renommer les fichiers ou utiliser `APP_VARIANT` dans `app.config.ts`.
+</Note>
+
+---
+
+## Récapitulatif des variables
+
+| Variable | Interface | Obligatoire | Description |
+|----------|-----------|-------------|-------------|
+| `NUXT_SUPABASE_URL` | Dashboard | **OUI** | URL du projet Supabase |
+| `NUXT_SUPABASE_ANON_KEY` | Dashboard | **OUI** | Clé `anon` publique |
+| `SUPABASE_SERVICE_ROLE_KEY` | Dashboard | **OUI** | Clé `service_role` (accès admin BDD sans RLS) |
+| `EXPO_PUBLIC_SUPABASE_URL` | Mobile | **OUI** | URL Supabase accessible depuis le device |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Mobile | **OUI** | Clé `anon` publique |
+| `EXPO_PUBLIC_LOCAL_IP` | Mobile | Dev local | IP LAN de la machine de développement |
+
+<Note>
+La `SUPABASE_SERVICE_KEY` ne doit **jamais** être exposée dans l'app mobile ni dans des variables `EXPO_PUBLIC_*`. Elle donne un accès total à la base de données sans RLS.
+</Note>
+
+---
+
+## Où trouver ces clés ?
+
+Sur [app.supabase.com](https://app.supabase.com) → ton projet → **Settings → API** :
+
+- **Project URL** → `SUPABASE_URL`
+- **anon / public** → `SUPABASE_KEY` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- **service_role** → `SUPABASE_SERVICE_KEY` ⚠️ à garder secret

@@ -1,0 +1,82 @@
+---
+title: Résultats des quiz
+description: Consulter et analyser les résultats des quiz dans le dashboard admin UTB Learn
+---
+
+# Résultats des quiz
+
+La page **Résultats des Quiz** (`/quiz-results`) offre une vue analytique complète des performances des agents sur les quiz de la plateforme.
+
+---
+
+## Filtres disponibles
+
+4 filtres combinables s'appliquent à toutes les données de la page :
+
+| Filtre          | Options                                                             | Effet                                    |
+| --------------- | ------------------------------------------------------------------- | ---------------------------------------- |
+| **Département** | Sélection via modale de recherche                                   | Restreint aux agents du département      |
+| **Période**     | 7j / 30j / 3 mois / 6 mois / Cette année / Tout                     | Fenêtre temporelle sur `date_soumission` |
+| **Statut**      | `Tous / Réussis ≥50% / Échoués <50% / Excellents ≥80% / Faibles <50%` | Filtre par score                         |
+| **Agent**       | Recherche texte libre                                               | Filtre sur nom, prénom ou code agent     |
+
+Un résumé des filtres actifs s'affiche sous forme de badges colorés. Le bouton **"Réinitialiser les filtres"** apparaît dès qu'au moins un filtre est actif.
+
+---
+
+## KPIs
+
+4 cartes en grille avec chargement squelette pendant la requête :
+
+| KPI               | Source               | Description                                              |
+| ----------------- | -------------------- | -------------------------------------------------------- |
+| **Total Quiz**    | `stats.totalQuiz`    | Toutes les soumissions dans la période                   |
+| **Taux Réussite** | `stats.tauxReussite` | % avec score ≥ 50 — badge vert/orange/rouge selon valeur |
+| **Score Moyen**   | `stats.scoreMoyen`   | Moyenne des scores sur 100                               |
+| **Quiz Réussis**  | `stats.quizReussis`  | Nombre absolu de quiz passés                             |
+
+Les KPIs sont alimentés par `GET /api/quiz/stats` avec les `queryParams` réactifs.
+
+---
+
+## Résultats par module
+
+Tableau listant chaque module avec :
+
+| Colonne              | Description                          |
+| -------------------- | ------------------------------------ |
+| **Module**           | Titre du module                      |
+| **Tentatives**       | Nombre de soumissions pour ce module |
+| **Taux de réussite** | % avec badge vert/orange/rouge       |
+| **Score moyen**      | Sur 100 avec badge coloré            |
+| **Détails**          | Bouton → ouvre la modale de détails  |
+
+Cliquer sur une ligne ou sur "Détails" ouvre une **modale** affichant les résultats individuels de chaque agent pour ce module :
+
+```
+Tentatives: 24    Taux réussite: 67%    Score moyen: 71/100
+
+┌─────────────────┬──────────┬──────────┬──────────────────┐
+│ Agent           │ Score    │ Résultat │ Date             │
+├─────────────────┼──────────┼──────────┼──────────────────┤
+│ Jean DUPONT     │ 85/100   │ ✓ Réussi │ 15/03/2026 09:30 │
+│ Marie KONÉ      │ 40/100   │ ✗ Échoué │ 14/03/2026 14:15 │
+└─────────────────┴──────────┴──────────┴──────────────────┘
+```
+
+Les scores sont colorés : vert &ge;80 / orange &ge;50 / rouge &lt;50.
+
+---
+
+## Top 10 meilleurs scores
+
+Liste des 10 meilleures performances toutes périodes confondues (selon les filtres actifs), avec :
+
+- Badge de classement (🏆 pour le 1er, chiffres pour les suivants)
+- Nom, prénom, code agent
+- Titre du module
+- Date de soumission
+- Badge score coloré
+
+Une barre de recherche filtre la liste localement (nom, prénom, code agent, titre module).
+ 

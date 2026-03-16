@@ -1,0 +1,82 @@
+---
+title: Télécharger un module
+description: Télécharger un module pour accès hors-ligne dans l'application mobile UTB Learn
+---
+
+# Télécharger un module
+
+UTB Learn permet de télécharger des modules complets pour les consulter **sans connexion internet**. Depuis le refactoring, les vidéos sont également incluses dans le téléchargement.
+
+---
+
+## Lancer un téléchargement
+
+Le bouton de téléchargement ⬇️ est disponible sur chaque carte module :
+
+- Sur l'écran **Accueil** (section "Découvrez vos modules")
+- Sur l'écran **Tous les modules**
+- Sur la page **Détails du module** (icône en haut à droite)
+
+Appuyer sur ⬇️ lance le téléchargement en arrière-plan via `DownloadContext.startDownload()`.
+
+---
+
+## Ce qui est téléchargé
+
+Le téléchargement (`OfflineService.downloadModule()`) récupère **tout le contenu du module** en 9 étapes :
+
+| Étape | Contenu                                                               |
+| ----- | --------------------------------------------------------------------- |
+| 1     | Métadonnées du module (titre, durée, tags)                            |
+| 2     | Liste des cours (titre, ordre, durée)                                 |
+| 3     | Documents du module avec `nom_original`                               |
+| 4     | Quiz associés à chaque cours (`hasQuiz`, `quizId`)                    |
+| 5     | Création du répertoire local                                          |
+| 6     | Inventaire de tous les fichiers à télécharger                         |
+| 7     | **Téléchargement documents annexes** (PDFs, images…)                  |
+| 7bis  | **Téléchargement vidéos embarquées** (MP4/WebM depuis le HTML TipTap) |
+| 8     | Remplacement des URLs distantes par chemins locaux dans le HTML       |
+| 9     | Sauvegarde des métadonnées JSON                                       |
+
+<Note>
+Les vidéos embarquées dans le contenu HTML des cours sont extraites via regex (`<video src="...">`) et téléchargées localement. Leurs URLs dans le HTML sont remplacées par les chemins `expo-file-system` locaux pour la lecture hors-ligne.
+</Note>
+
+---
+
+## États du téléchargement
+
+| État          | Icône sur la carte   | Description                  |
+| ------------- | -------------------- | ---------------------------- |
+| `pending`     | Spinner              | Initialisation en cours      |
+| `downloading` | Barre de progression | Téléchargement actif         |
+| `completed`   | ✅ Coche verte       | Module disponible hors-ligne |
+| `error`       | —                    | Échec — réessayer            |
+
+---
+
+## Après le téléchargement
+
+Un toast de succès s'affiche :
+
+```
+✅ Téléchargement terminé
+   "Conformité et Réglementation" est disponible hors ligne
+```
+
+Le module apparaît automatiquement dans le filtre **"Téléchargés"** de la liste des modules et dans l'écran **"Modules téléchargés"**.
+
+---
+
+## Prérequis
+
+- Une connexion internet active est requise pendant le téléchargement
+- Le module doit être publié et avoir `download_enabled = true` (activé par un SUPERADMIN depuis le dashboard)
+- Suffisamment d'espace de stockage sur le device
+
+<Warning>
+  Si la connexion est coupée pendant le téléchargement, le
+  module partiellement téléchargé est automatiquement
+  supprimé (rollback dans
+  `OfflineService.downloadModule()`).
+</Warning>

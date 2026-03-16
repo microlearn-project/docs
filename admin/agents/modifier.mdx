@@ -1,0 +1,64 @@
+---
+title: Modifier un agent
+description: Modifier les informations d'un agent dans le dashboard admin UTB Learn
+---
+
+# Modifier un agent
+
+La modification d'un agent nécessite de **sélectionner exactement une ligne** dans le tableau. Le bouton **"Modifier"** apparaît alors dans la barre d'actions.
+
+---
+
+## Sélection d'un agent
+
+Cocher la checkbox d'une ligne dans le tableau active le bouton "Modifier" en haut. Si plusieurs lignes sont sélectionnées, le bouton disparaît — la modification est unitaire uniquement.
+
+---
+
+## Formulaire de modification
+
+Le formulaire s'ouvre pré-rempli avec les données actuelles de l'agent. En haut de la modale, un encadré rappelle l'identité de l'agent (avatar initiales, nom complet, code agent, email).
+
+### Champs modifiables
+
+| Section                       | Champ       | Remarque                |
+| ----------------------------- | ----------- | ----------------------- |
+| **Informations personnelles** | Nom         | Converti en MAJUSCULES  |
+|                               | Prénom      |                         |
+|                               | Email       |                         |
+| **Affectation**               | Direction   | Via modale de recherche |
+|                               | Département | Via modale de recherche |
+
+Un encadré en bas du formulaire affiche la **direction et le département actuels** de l'agent pour comparaison visuelle avant de sauvegarder.
+
+---
+
+## Comportement des modales de sélection
+
+Les modales Direction et Département chargent leurs données au montage (`useFetch` avec `server: true`). La sélection actuelle de l'agent est pré-sélectionnée automatiquement dans les modales à l'ouverture.
+
+---
+
+## Sauvegarde
+
+`PATCH /api/agent/update` — met à jour `nom`, `prenom`, `email`, `id_direction`, `id_departement` dans la table `agent`.
+
+Après succès :
+
+- Toast "Agent mis à jour"
+- Fermeture de la modale
+- Déclenchement du `refresh()` du tableau
+- Désélection automatique de la ligne (`clear-selection`)
+
+<Note>
+  La fermeture de la modale (croix, Echap, clic overlay)
+  déclenche aussi `clear-selection` pour éviter qu'une ligne
+  reste sélectionnée sans correspondre à l'état du
+  formulaire.
+</Note>
+
+---
+
+## Suppression depuis le menu ligne
+
+Chaque ligne du tableau dispose d'un menu `⋮` (trois points) en colonne Actions. Ce menu propose aussi la suppression directe d'un agent sans passer par la sélection multiple (voir [Activer / Désactiver](/admin/agents/activer-desactiver)).

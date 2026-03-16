@@ -1,0 +1,114 @@
+---
+title: Répondre au quiz
+description: Passer un quiz dans l'application mobile UTB Learn
+---
+
+# Répondre au quiz
+
+Le quiz valide les acquis d'un cours. Il se compose d'une série de questions à choix unique ou multiple, présentées une par une avec un panneau de réponses animé.
+
+---
+
+## Aperçu
+
+![Quiz — Question 1](/images/mobile/quiz-screen-1.jpg)
+
+![Quiz — Dernière question](/images/mobile/quiz-screen-2.jpg)
+
+---
+
+## Accéder au quiz
+
+Le quiz est accessible depuis le bouton **"Passer le quiz"** en bas de la page d'un cours. Il nécessite obligatoirement une **connexion internet**.
+
+<Warning>
+Les quiz ne sont pas disponibles en mode hors-ligne. Toute tentative d'accès sans connexion affiche un message d'erreur.
+</Warning>
+
+---
+
+## Interface
+
+### En-tête
+
+```
+Question 1                    ✕
+████░░░░░░░░░░░░░░░░  (barre verte)
+        1/5 question
+```
+
+| Élément | Description |
+|---------|-------------|
+| **"Question N"** | Numéro de la question courante |
+| **✕** | Quitter le quiz et retourner au cours |
+| **Barre de progression** | Verte, avance à chaque question |
+| **Compteur** | `N/Total question` |
+
+---
+
+### Zone question
+
+La question s'affiche au centre de l'écran en grand, rendue depuis du **HTML** (supporte le gras, l'italique, le souligné).
+
+Si la question accepte **plusieurs réponses**, un texte d'indication s'affiche sous la question :
+```
+Plusieurs réponses possibles
+```
+
+Un bouton bleu **"Voir les réponses" ↑** est ancré en bas de la zone question. Appuyer dessus fait monter le panneau de réponses depuis le bas de l'écran.
+
+---
+
+### Panneau de réponses (bottom panel)
+
+Le panneau occupe **55% de la hauteur de l'écran** avec un fond dégradé bleu foncé. Il contient :
+
+**Les cartes de réponses** — une par option :
+- Fond blanc avec cercle de sélection (radio ou checkbox selon le type)
+- La réponse sélectionnée passe en surbrillance (fond blanc + bordure bleue + radio rempli)
+
+**Sélection selon le type de question :**
+
+| Type | Comportement |
+|------|-------------|
+| **Choix unique** | Sélectionner une réponse désélectionne l'autre |
+| **Choix multiple** | Plusieurs réponses cumulables, tap à nouveau pour désélectionner |
+
+**Boutons de navigation :**
+
+| Bouton | Condition | Action |
+|--------|-----------|--------|
+| `←` (flèche retour) | Pas sur la 1ère question | Question précédente |
+| **Suivant** | Au moins une réponse sélectionnée | Question suivante |
+| **Terminer** | Dernière question + réponse sélectionnée | Ouvre la modale de confirmation |
+
+<Note>
+Le bouton **Suivant / Terminer** reste **désactivé** (grisé) tant qu'aucune réponse n'est sélectionnée pour la question courante.
+</Note>
+
+Appuyer en dehors du panneau (sur la zone question) le referme sans perdre les réponses déjà saisies. La flèche `↑` du bouton toggle pivote à `↓` quand le panneau est ouvert.
+
+---
+
+## Modale de confirmation
+
+À la dernière question, appuyer sur **Terminer** affiche une modale de confirmation avant soumission :
+
+```
+┌─────────────────────────────────┐
+│   Soumettre le quiz ?           │
+│                                 │
+│   [Revoir]    [Confirmer]       │
+└─────────────────────────────────┘
+```
+
+| Bouton | Action |
+|--------|--------|
+| **Revoir** | Ferme la modale, permet de revenir sur les réponses |
+| **Confirmer** | Soumet le quiz, affiche un spinner pendant l'envoi |
+
+---
+
+## Soumission & navigation post-quiz
+
+Après confirmation, le quiz est soumis à Supabase via `QuizService.submitQuiz()`. La progression du module est mise à jour automatiquement (`CoursService.updateModuleProgress()`), puis l'agent est redirigé vers la [page de résultats](/mobile/quiz/resultats).

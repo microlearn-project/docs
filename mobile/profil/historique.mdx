@@ -1,0 +1,96 @@
+---
+title: Historique
+description: Consulter l'historique des formations dans l'application mobile UTB Learn
+---
+
+# Historique
+
+La page **Historique** liste toutes les formations que l'agent a commencées ou terminées, groupées en deux sections. Elle est accessible depuis l'onglet **Profil**.
+
+---
+
+## Aperçu
+
+![Historique des formations](/images/mobile/history-screen.jpg)
+
+---
+
+## En-tête
+
+Même en-tête dégradé bleu foncé que la page de modification du profil.
+
+```
+←     Historique
+  Formations en cours / terminées
+```
+
+---
+
+## Organisation
+
+Les modules sont divisés en deux sections :
+
+### En cours
+
+Modules démarrés mais dont la progression est inférieure à 100%. Icône 🕐 bleue.
+
+### Terminées
+
+Modules complétés à 100%. Icône ✅ verte.
+
+<Note>
+Les deux sections s'affichent uniquement si elles contiennent au moins un module. Si l'agent n'a aucune formation, un état vide s'affiche à la place.
+</Note>
+
+---
+
+## Carte module
+
+Chaque module est affiché dans une carte blanche avec ombre légère :
+
+| Élément | Description |
+|---------|-------------|
+| **Icône statut** | ✅ vert (terminé) ou 🕐 bleu (en cours) |
+| **Titre** | Nom du module (max 2 lignes) |
+| **Tags** | Défilant horizontalement si plusieurs |
+| **Dernière activité** | Date formatée (ex: 12 mars 2026) |
+| **Progression** | Pourcentage en bleu (en cours) ou vert (terminé) |
+
+Appuyer sur une carte navigue vers la [page de détails du module](/mobile/modules/details) avec `from: "history"`.
+
+---
+
+## Chargement
+
+Pendant le chargement, des **squelettes animés** s'affichent — 2 pour la section "En cours" et 2 pour "Terminées".
+
+---
+
+## Pull to refresh
+
+Faire glisser vers le bas recharge l'historique depuis Supabase (`AgentService.getAgentHistory()`).
+
+<Warning>
+Le pull to refresh et le chargement initial nécessitent une connexion internet. En mode hors-ligne, un message d'erreur s'affiche.
+</Warning>
+
+---
+
+## Rechargement automatique
+
+La page recharge l'historique **à chaque fois qu'elle est affichée** (`useFocusEffect`) pour refléter la progression mise à jour après un quiz ou la fin d'un cours.
+
+---
+
+## État vide
+
+Si l'agent n'a commencé aucune formation :
+
+```
+        📖
+
+   Aucune formation
+
+Vous n'avez pas encore commencé
+        de formation
+```

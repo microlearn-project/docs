@@ -1,0 +1,57 @@
+---
+title: Dashboard Admin
+description: Présentation du dashboard d'administration UTB Learn
+---
+
+# Dashboard Admin
+
+Le dashboard admin est l'interface de gestion centrale d'**UTB Learn**. Il est accessible aux membres de la DSI et aux administrateurs habilités pour gérer les modules, les agents, les quiz et suivre l'activité de la plateforme.
+
+---
+
+## Accès
+
+Le dashboard est hébergé sur **Vercel** et accessible via navigateur web. Il n'est pas accessible aux agents UTB — seuls les comptes avec un rôle admin valide peuvent s'y connecter.
+
+- URL de production : dashboard Vercel (voir [Variables d'environnement](/intro/env-vars))
+- Authentification : session serveur sécurisée (cookie + table `admin_sessions`)
+
+---
+
+## Rôles disponibles
+
+| Rôle | Accès |
+|------|-------|
+| **Administrateur** | Accès complet — gestion agents, modules, quiz, catégories, logs |
+| **FORMATEUR** | Accès restreint — création de contenu, pas de gestion des agents ni des actions rapides |
+
+<Note>
+Le rôle est vérifié à chaque requête via la session serveur. Un agent sans rôle valide (`user_role.valide = true`) ne peut pas accéder au dashboard même avec des identifiants corrects.
+</Note>
+
+---
+
+## Stack technique
+
+| Couche | Technologie |
+|--------|------------|
+| Framework | Nuxt 4 (Vue 3, Composition API) |
+| UI | Nuxt UI v3 |
+| Éditeur de cours | TipTap 3 |
+| Charts | @unovis/vue + Chart.js |
+| Backend | Server routes Nuxt (`server/api/`) |
+| Base de données | Supabase PostgreSQL (via `service_role`) |
+| Hosting | Vercel |
+
+---
+
+## Navigation
+
+Le dashboard utilise un layout `UDashboardPanel` avec sidebar latérale. Les principales sections sont accessibles depuis la sidebar :
+
+- **Tableau de bord** — statistiques et aperçu
+- **Modules** — création et gestion du contenu
+- **Agents** — gestion des comptes
+- **Quiz** — résultats et correction
+- **Catégories / Directions / Départements** — référentiels
+- **Journal d'activité** — logs de traçabilité
