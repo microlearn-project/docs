@@ -1,0 +1,157 @@
+---
+title: Sessions utilisateurs
+description: Flow complet de connexion et gestion des sessions sur le mobile et le dashboard UTB Learn
+---
+
+# Sessions utilisateurs
+
+Ce guide documente le flux complet d'authentification et de gestion des sessions sur les deux interfaces d'UTB Learn.
+
+---
+
+## Dashboard Admin
+
+### Connexion
+
+```
+Utilisateur saisit identifiant + mot de passe
+            │
+            ▼
+POST /api/auth/login
+            │
+            ├── 1. Recherche agent (email ou code_agent)
+            ├── 2. Vérification password_hash (bcrypt)
+            ├── 3. Vérification agent.actif = true
+            ├── 4. Vérification user_role valide
+            │         (valide=true, date_from<=now, date_to IS NULL ou >=now)
+            ├── 5. Détection sessions actives (admin_sessions)
+            │         ↓ session active trouvée ET forceLogin=false
+            │         → return { requiresConfirmation: true, sessionInfo }
+            │         ↓ forceLogin=true
+            │         → UPDATE admin_sessions SET is_active=false
+            ├── 6. Création nouvelle session
+            │         INSERT admin_sessions {
+            │           session_token: crypto.randomUUID(),
+            │           user_agent, ip_address,
+            │           expires_at: now + 24h,
+            │           is_active: true
+            │         }
+            ├── 7. UPDATE agent.last_login = now()
+            ├── 8. createSession(event, sessionUser) → cookie HTTP
+            └── 9. logConnexion() → activity_log
+```
+
+### Structure de la session cookie
+
+```ts
+SessionUser {
+  id_agent, code_agent, nom, prenom, email,
+  id_direction, id_departement,
+  role: { id_role, designation },
+  id_user_role,
+  session_token  // lié à admin_sessions
+}
+```
+
+### Vérification de session active (SessionWatcher)
+
+Le composant `SessionWatcher.vue` tourne en arrière-plan sur toutes les pages du dashboard. Il appelle périodiquement `POST /api/auth/validate-session` pour vérifier que la session est toujours active en BDD (`admin_sessions.is_active = true`).
+
+Si la session a été révoquée (ex: connexion forcée depuis un autre appareil) → déconnexion automatique et redirection vers `/login`.
+
+### Déconnexion
+
+```
+POST /api/auth/logout
+  │
+  ├── UPDATE admin_sessions SET is_active=false
+  │   WHERE session_token = session.user.session_token
+  ├── logDeconnexion() → activity_log
+  └── clearUserSession(event) → supprime le cookie
+```
+
+### Middleware auth global
+
+`middleware/auth.global.ts` s'exécute sur chaque navigation. Il appelle `GET /api/auth/me` pour vérifier la session côté serveur. Si non authentifié → redirection vers `/login`.
+
+---
+
+## Application Mobile
+
+### Connexion
+
+```
+Agent saisit code_agent (6 cases) + mot de passe
+            │
+            ▼
+AuthContext.signIn({ code_agent, password })
+            │
+            ▼
+POST /api/auth/login (même endpoint que dashboard)
+  OU
+supabase.auth.signInWithPassword({ email, password })
+            │
+            ├── Session Supabase Auth créée (JWT)
+            ├── Token stocké dans AsyncStorage
+            └── Contexte Auth mis à jour (agent, session)
+```
+
+<Note>
+  Le mobile crée une vraie session Supabase Auth — le JWT
+  est utilisé pour les appels directs au client Supabase JS.
+  La session persiste dans AsyncStorage entre les
+  redémarrages de l'app.
+</Note>
+
+### Persistance de session
+
+Au démarrage de l'app, `AuthContext` tente de restaurer la session depuis AsyncStorage :
+
+```
+App démarrée
+    │
+    ▼
+supabase.auth.getSession()
+    │
+    ├── Session valide → agent chargé, accès direct
+    ├── Session expirée → supabase.auth.refreshSession()
+    │       ├── Succès → session renouvelée silencieusement
+    │       └── Échec → redirection vers /login
+    └── Pas de session → redirection vers /login
+```
+
+Cela permet à l'agent d'accéder à l'app sans se reconnecter même après fermeture complète.
+
+### Déconnexion mobile
+
+```
+Agent appuie sur "Déconnexion"
+    │
+    ▼
+supabase.auth.signOut()
+    │
+    ├── Token supprimé d'AsyncStorage
+    ├── Contexte Auth réinitialisé (agent = null)
+    └── Redirection vers /login
+```
+
+### Comportement hors-ligne
+
+Si l'app s'ouvre sans connexion internet :
+
+- Session locale encore valide → accès aux modules téléchargés
+- Session expirée → message d'erreur, reconnexion requise au retour en ligne
+
+---
+
+## Comparaison des deux systèmes
+
+| Aspect                      | Dashboard Admin                               | Application Mobile                  |
+| --------------------------- | --------------------------------------------- | ----------------------------------- |
+| **Mécanisme**               | Cookie HTTP + `admin_sessions` BDD            | JWT Supabase Auth + AsyncStorage    |
+| **Durée session**           | 24h (expires_at)                              | Jusqu'à expiration JWT Supabase     |
+| **Session unique**          | Oui — conflit détecté, modale de confirmation | Non — plusieurs appareils possibles |
+| **Révocation**              | `is_active=false` dans `admin_sessions`       | `supabase.auth.signOut()`           |
+| **Persistance**             | Cookie navigateur                             | AsyncStorage device                 |
+| **Vérification périodique** | `SessionWatcher` (polling)                    | Non                                 |
+| **Tracé**                   | `activity_log` (connexion/déconnexion)        | Non                                 |

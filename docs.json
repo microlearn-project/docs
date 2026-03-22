@@ -180,7 +180,9 @@
               "guides/deployer-nouvelle-version",
               "guides/ajouter-cours-video",
               "guides/comprendre-activity-log",
-              "guides/generer-apk"
+              "guides/generer-apk",
+              "guides/password-reset",
+              "guides/sessions-utilisateurs"
             ]
           }
         ]

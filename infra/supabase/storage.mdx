@@ -5,7 +5,7 @@ description: Buckets Supabase Storage utilisés par UTB Learn
 
 # Supabase Storage
 
-UTB Learn utilise **2 buckets** Supabase Storage pour stocker les fichiers médias et documents.
+UTB Learn utilise **4 buckets** Supabase Storage pour stocker les fichiers médias et documents.
 
 ---
 
@@ -36,6 +36,28 @@ Stocke les fichiers annexes uploadés au niveau des modules.
 | **Structure des chemins** | `modules/{id_module}/{nom_nettoyé}_{timestamp}.ext` |
 
 Les noms de fichiers sont nettoyés avant upload (suppression accents, espaces → underscores, caractères spéciaux supprimés, timestamp unique).
+
+### `cours-images`
+
+Stocke les images associées aux cours.
+
+| Propriété                 | Valeur                                |
+| ------------------------- | ------------------------------------- |
+| **Accès**                 | Public                                |
+| **Formats acceptés**      | Tous types (PNG, JPG, GIF ou WebP)    |
+| **Taille maximale**       | 5 Mo par fichier                     |
+| **Structure des chemins** | `cours_images/{id_cours}/fichier.ext` |
+
+### `module-images`
+
+Stocke les images associées aux modules.
+
+| Propriété                 | Valeur                                |
+| ------------------------- | ------------------------------------- |
+| **Accès**                 | Public                                |
+| **Formats acceptés**      | Tous types (PNG, JPG, GIF ou WebP)    |
+| **Taille maximale**       | 5 Mo par fichier                     |
+| **Structure des chemins** | `module_images/{id_module}/fichier.ext` |
 
 ---
 
